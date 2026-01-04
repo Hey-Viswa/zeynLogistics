@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/data/trip_provider.dart';
-import '../../shared/widgets/map_placeholder.dart';
 
 class BookRideScreen extends ConsumerStatefulWidget {
   const BookRideScreen({super.key});
@@ -59,21 +58,66 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const MapPlaceholder(
-              label: 'Map view will appear here',
-              icon: Icons.location_on_outlined,
+            Text(
+              'Your Route',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
-            _buildTextField(
-              controller: _pickupController,
-              label: 'Pickup Location',
-              icon: Icons.my_location,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _dropController,
-              label: 'Drop Location',
-              icon: Icons.location_on,
+            // Connected Inputs
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                children: [
+                  // Pickup Input
+                  Row(
+                    children: [
+                      Column(
+                        children: [
+                          Icon(
+                            Icons.my_location,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          Container(
+                            height: 40,
+                            width: 2,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outlineVariant.withOpacity(0.5),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildRouteField(
+                          controller: _pickupController,
+                          hint: 'Pickup Location',
+                          isPickup: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Drop Input
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.redAccent),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildRouteField(
+                          controller: _dropController,
+                          hint: 'Where to?',
+                          isPickup: false,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             Text('Date & Time', style: Theme.of(context).textTheme.titleMedium),
@@ -286,6 +330,37 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouteField({
+    required TextEditingController controller,
+    required String hint,
+    required bool isPickup,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: isPickup
+            ? Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                width: 1,
+              )
+            : null,
+      ),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hint,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          filled: false,
         ),
       ),
     );
