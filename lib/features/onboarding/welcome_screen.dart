@@ -21,7 +21,7 @@ class WelcomeScreen extends ConsumerWidget {
 
     // Navigate
     if (context.mounted) {
-      context.go('/phone');
+      context.push('/home');
     }
   }
 

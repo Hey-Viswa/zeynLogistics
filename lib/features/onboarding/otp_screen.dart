@@ -50,7 +50,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       ); // Reusing this key for "Auth Completed"
 
       if (mounted) {
-        context.go('/welcome'); // Go to Role Selection
+        context.push('/welcome'); // Go to Role Selection
       }
     }
   }
