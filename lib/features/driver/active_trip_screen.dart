@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/data/trip_provider.dart';
+import '../../shared/widgets/map_placeholder.dart';
 
 class ActiveTripScreen extends ConsumerWidget {
   final Trip trip;
@@ -28,6 +29,11 @@ class ActiveTripScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const MapPlaceholder(
+              label: 'Navigation will appear here',
+              icon: Icons.navigation,
+            ),
+            const SizedBox(height: 24),
             _buildStatusCard(context, currentTrip),
             const SizedBox(height: 32),
             _buildLocationSteppers(context, currentTrip),

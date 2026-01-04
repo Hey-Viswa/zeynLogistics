@@ -13,26 +13,28 @@ class RequesterHomeScreen extends ConsumerWidget {
         .where((t) => t.status != TripStatus.completed)
         .toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Hello,\nRequester',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 24),
-        if (activeTrips.isEmpty)
-          _buildEmptyState(context)
-        else
-          ...activeTrips.map((trip) => _buildTripCard(context, trip)),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Hello,\nRequester',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 24),
+          if (activeTrips.isEmpty)
+            _buildEmptyState(context)
+          else
+            ...activeTrips.map((trip) => _buildTripCard(context, trip)),
 
-        const SizedBox(height: 24),
-        FilledButton.icon(
-          onPressed: () => context.push('/book-ride'),
-          icon: const Icon(Icons.add),
-          label: const Text('Book a Ride'),
-        ),
-      ],
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: () => context.push('/book-ride'),
+            icon: const Icon(Icons.add),
+            label: const Text('Book a Ride'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -62,42 +64,45 @@ class RequesterHomeScreen extends ConsumerWidget {
   }
 
   Widget _buildTripCard(BuildContext context, Trip trip) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Trip #${trip.id.substring(0, 4)}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () => context.push('/trip-status/${trip.id}'),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Trip #${trip.id.substring(0, 4)}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                _buildStatusChip(context, trip.status),
-              ],
-            ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                const Icon(Icons.my_location, size: 16),
-                const SizedBox(width: 8),
-                Expanded(child: Text(trip.pickup)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 16),
-                const SizedBox(width: 8),
-                Expanded(child: Text(trip.drop)),
-              ],
-            ),
-          ],
+                  _buildStatusChip(context, trip.status),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                children: [
+                  const Icon(Icons.my_location, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(trip.pickup)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(trip.drop)),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

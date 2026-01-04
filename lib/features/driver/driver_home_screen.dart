@@ -38,27 +38,41 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       // For simplicity, we just show a prominent card to go to active trip.
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildHeader(context),
-        const SizedBox(height: 24),
-        if (activeTrip != null) _buildActiveTripAlert(context, activeTrip),
-
-        if (_isOnline) ...[
-          Text(
-            'Available Requests',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          if (availableTrips.isEmpty)
-            const Center(child: Text('No new requests nearby.'))
-          else
-            ...availableTrips.map((trip) => _buildTripCard(context, ref, trip)),
-        ] else
-          _buildOfflineState(context),
-      ],
-    );
+    return _isOnline
+        ? SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 24),
+                if (activeTrip != null) ...[
+                  _buildActiveTripAlert(context, activeTrip),
+                  const SizedBox(height: 24),
+                ],
+                Text(
+                  'Available Requests',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 16),
+                if (availableTrips.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: Center(child: Text('No new requests nearby.')),
+                  )
+                else
+                  ...availableTrips.map(
+                    (trip) => _buildTripCard(context, ref, trip),
+                  ),
+              ],
+            ),
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(context),
+              Expanded(child: _buildOfflineState(context)),
+            ],
+          );
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -174,7 +188,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  '\$${trip.price.toStringAsFixed(0)}',
+                  '₹${trip.price.toStringAsFixed(0)}',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,

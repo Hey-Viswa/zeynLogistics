@@ -32,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
           context.go('/welcome');
         }
       } else {
-        context.go('/onboarding');
+        context.go('/intro');
       }
     }
   }

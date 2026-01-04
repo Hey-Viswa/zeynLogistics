@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/data/trip_provider.dart';
+import '../../shared/widgets/map_placeholder.dart';
 
 class BookRideScreen extends ConsumerStatefulWidget {
   const BookRideScreen({super.key});
@@ -13,6 +14,7 @@ class BookRideScreen extends ConsumerStatefulWidget {
 class _BookRideScreenState extends ConsumerState<BookRideScreen> {
   final _pickupController = TextEditingController();
   final _dropController = TextEditingController();
+  final _notesController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String _selectedVehicle = 'Car';
 
@@ -28,6 +30,11 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const MapPlaceholder(
+              label: 'Map view will appear here',
+              icon: Icons.location_on_outlined,
+            ),
+            const SizedBox(height: 24),
             _buildTextField(
               controller: _pickupController,
               label: 'Pickup Location',
@@ -93,6 +100,13 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 24),
+            _buildTextField(
+              controller: _notesController,
+              label: 'Notes (Optional)',
+              icon: Icons.note_alt_outlined,
+              maxLines: 3,
+            ),
             const SizedBox(height: 32),
             FilledButton(
               onPressed: () {
@@ -127,9 +141,11 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    int maxLines = 1,
   }) {
     return TextField(
       controller: controller,
+      maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
