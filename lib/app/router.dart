@@ -6,7 +6,6 @@ import '../features/onboarding/otp_screen.dart';
 import '../features/onboarding/welcome_screen.dart';
 import '../features/onboarding/phone_screen.dart';
 
-import '../features/onboarding/verify_method_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/requester/book_ride_screen.dart';
 import '../features/requester/trip_status_screen.dart';
@@ -34,10 +33,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/welcome',
         builder: (context, state) => const WelcomeScreen(),
       ),
-      GoRoute(
-        path: '/verify-method',
-        builder: (context, state) => const VerifyMethodScreen(),
-      ),
+
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(
         path: '/book-ride',
