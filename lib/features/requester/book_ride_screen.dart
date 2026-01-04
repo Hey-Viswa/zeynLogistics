@@ -206,12 +206,9 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: Text(
-                'Select $_selectedVehicle',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: const Text(
+                'Confirm Request',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -295,15 +292,6 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                     ],
                   ),
                 ],
-              ),
-            ),
-            // Price
-            Text(
-              '₹${option.price}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
               ),
             ),
           ],

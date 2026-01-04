@@ -186,14 +186,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   label: Text(trip.vehicle),
                   avatar: const Icon(Icons.directions_car, size: 16),
                 ),
-                const Spacer(),
-                Text(
-                  '₹${trip.price.toStringAsFixed(0)}',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 16),
