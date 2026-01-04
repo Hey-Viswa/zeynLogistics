@@ -17,17 +17,22 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkOnboarding() async {
-    await Future.delayed(const Duration(seconds: 1)); // 1 sec delay
+    await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool('seenOnboarding') ?? false;
+    final roleString = prefs.getString('user_role');
 
     if (mounted) {
       if (seen) {
-        context.go('/phone');
+        if (roleString != null && roleString != 'UserRole.none') {
+          context.go('/home');
+        } else {
+          context.go('/welcome');
+        }
       } else {
-        context.go('/welcome');
+        context.go('/onboarding');
       }
     }
   }
@@ -35,27 +40,30 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF4CE5B1),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 45,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 8),
-                borderRadius: BorderRadius.circular(16),
+            Icon(
+              Icons.local_shipping_rounded,
+              size: 80,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Logistix',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'zeyn',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 40,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -1.0,
+            const SizedBox(height: 48),
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],

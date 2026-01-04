@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../shared/theme/app_theme.dart';
 import 'router.dart';
 
 class LogistixApp extends ConsumerWidget {
@@ -11,7 +12,8 @@ class LogistixApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Logistix App',
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       routerConfig: router,
     );
   }
