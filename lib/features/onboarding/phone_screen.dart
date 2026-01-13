@@ -81,8 +81,21 @@ class _PhoneScreenState extends State<PhoneScreen> {
                     const Spacer(),
                     FilledButton(
                       onPressed: () {
-                        if (_phoneController.text.isNotEmpty) {
-                          context.push('/otp', extra: _phoneController.text);
+                        final phone = _phoneController.text.trim();
+                        if (phone.length == 10) {
+                          context.push('/otp', extra: phone);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Please enter a valid 10-digit number',
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                            ),
+                          );
                         }
                       },
                       style: FilledButton.styleFrom(

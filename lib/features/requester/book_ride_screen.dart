@@ -184,6 +184,15 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
               onPressed: () {
                 if (_pickupController.text.isEmpty ||
                     _dropController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        'Please enter both Pickup and Drop locations',
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
                   return;
                 }
 

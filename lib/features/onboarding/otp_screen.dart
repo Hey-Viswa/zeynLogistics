@@ -52,6 +52,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       if (mounted) {
         context.push('/welcome'); // Go to Role Selection
       }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please enter the full 4-digit code'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
   }
 
