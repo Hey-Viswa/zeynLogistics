@@ -35,3 +35,33 @@ class RoleNotifier extends StateNotifier<UserRole> {
 final roleProvider = StateNotifierProvider<RoleNotifier, UserRole>((ref) {
   return RoleNotifier();
 });
+
+enum VerificationStatus { none, pending, verified }
+
+class VerificationNotifier extends StateNotifier<VerificationStatus> {
+  VerificationNotifier() : super(VerificationStatus.none) {
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final statusString = prefs.getString('verification_status');
+    if (statusString != null) {
+      state = VerificationStatus.values.firstWhere(
+        (e) => e.toString() == statusString,
+        orElse: () => VerificationStatus.none,
+      );
+    }
+  }
+
+  Future<void> setStatus(VerificationStatus status) async {
+    state = status;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('verification_status', status.toString());
+  }
+}
+
+final verificationProvider =
+    StateNotifierProvider<VerificationNotifier, VerificationStatus>((ref) {
+      return VerificationNotifier();
+    });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 import '../../shared/data/trip_provider.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
@@ -86,7 +87,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             Text('Driver', style: Theme.of(context).textTheme.headlineMedium),
           ],
         ),
-        _buildOnlineToggle(context),
+        Row(
+          children: [
+            _buildOnlineToggle(context),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => context.push('/profile'),
+              icon: const CircleAvatar(
+                radius: 18,
+                child: Icon(Icons.person, size: 20),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -94,6 +107,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   Widget _buildOnlineToggle(BuildContext context) {
     return InkWell(
       onTap: () {
+        HapticFeedback.selectionClick();
         setState(() {
           _isOnline = !_isOnline;
         });
@@ -103,24 +117,32 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: _isOnline
-              ? Colors.green.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.1),
+              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: _isOnline ? Colors.green : Colors.grey),
+          border: Border.all(
+            color: _isOnline
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
+          ),
         ),
         child: Row(
           children: [
             Icon(
               Icons.power_settings_new,
               size: 20,
-              color: _isOnline ? Colors.green : Colors.grey,
+              color: _isOnline
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.outline,
             ),
             const SizedBox(width: 8),
             Text(
               _isOnline ? 'ONLINE' : 'OFFLINE',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: _isOnline ? Colors.green : Colors.grey,
+                color: _isOnline
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.outline,
               ),
             ),
           ],
@@ -197,6 +219,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   ref
                       .read(tripProvider.notifier)
                       .acceptRide(trip.id, 'current_driver');
@@ -215,7 +238,11 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   Widget _buildLocationRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey),
+        Icon(
+          icon,
+          size: 20,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),

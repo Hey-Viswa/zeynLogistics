@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -42,15 +44,15 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     // Mock Verification Logic
     final otp = _controllers.map((c) => c.text).join();
     if (otp.length == 4) {
+      // Simulate network request
+      // showing loading indicator could go here
+
       // Mark onboarding/auth as seen
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(
-        'seenOnboarding',
-        true,
-      ); // Reusing this key for "Auth Completed"
+      await prefs.setBool('seenOnboarding', true);
 
       if (mounted) {
-        context.push('/welcome'); // Go to Role Selection
+        context.push('/welcome');
       }
     } else {
       if (mounted) {
@@ -70,45 +72,82 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text(''),
         backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              SizedBox(height: 20.h),
+              // Icon Header
+              Center(
+                child: Container(
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondaryContainer.withOpacity(0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.lock_open_rounded,
+                    size: 48.sp,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+              ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
+
+              SizedBox(height: 32.h),
+
               Text(
                 "Verify it's you",
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
-              ),
-              const SizedBox(height: 8),
+              ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+
+              SizedBox(height: 8.h),
+
               Text(
                 'We sent a code to ${widget.phoneNumber}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 16.sp,
                 ),
-              ),
-              const SizedBox(height: 48),
+              ).animate().fadeIn(delay: 300.ms),
+
+              SizedBox(height: 48.h),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(
                   4,
-                  (index) => _buildOtpDigit(index, context),
+                  (index) => _buildOtpDigit(index, context)
+                      .animate(delay: (400 + (index * 100)).ms)
+                      .scale(curve: Curves.easeOutBack),
                 ),
               ),
+
               const Spacer(),
+
               FilledButton(
                 onPressed: _verifyOtp,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.all(18),
+                  padding: EdgeInsets.symmetric(vertical: 18.h),
                 ),
-                child: const Text('Verify & Continue'),
-              ),
-              const SizedBox(height: 16_0),
+                child: Text(
+                  'Verify & Continue',
+                  style: TextStyle(fontSize: 16.sp),
+                ),
+              ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.5, end: 0),
+
+              SizedBox(height: 16.h),
             ],
           ),
         ),
@@ -118,20 +157,35 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   Widget _buildOtpDigit(int index, BuildContext context) {
     return SizedBox(
-      width: 64,
-      height: 64,
+      width: 64.w,
+      height: 64.w,
       child: TextField(
         controller: _controllers[index],
         focusNode: _focusNodes[index],
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         maxLength: 1,
-        style: Theme.of(context).textTheme.headlineMedium,
+        style: Theme.of(
+          context,
+        ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         decoration: InputDecoration(
           counterText: '',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 2,
+            ),
+          ),
           filled: true,
-          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          fillColor: Theme.of(context).colorScheme.surface,
         ),
         onChanged: (value) => _onDigitChanged(index, value),
       ),

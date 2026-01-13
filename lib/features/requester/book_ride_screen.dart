@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 import '../../shared/data/trip_provider.dart';
 
 class BookRideScreen extends ConsumerStatefulWidget {
@@ -196,6 +197,8 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                   return;
                 }
 
+                HapticFeedback.mediumImpact();
+
                 ref
                     .read(tripProvider.notifier)
                     .bookRide(
@@ -208,8 +211,8 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                 context.pop();
               },
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2ECC71), // Access green color
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 padding: const EdgeInsets.all(18),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -232,20 +235,27 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
     bool isSelected,
   ) {
     return GestureDetector(
-      onTap: () => setState(() => _selectedVehicle = option.name),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedVehicle = option.name);
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE8F8F5) : Colors.white,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF2ECC71) : Colors.transparent,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.transparent,
             width: 2,
           ),
           boxShadow: [
             if (!isSelected)
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: Theme.of(context).shadowColor.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -258,10 +268,14 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(option.icon, size: 32, color: Colors.black87),
+              child: Icon(
+                option.icon,
+                size: 32,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             const SizedBox(width: 16),
             // Details
@@ -271,10 +285,10 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                 children: [
                   Text(
                     option.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -284,18 +298,26 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                         option.eta,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.circle, size: 4, color: Colors.grey),
+                      Icon(
+                        Icons.circle,
+                        size: 4,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 8),
-                      Icon(Icons.person, size: 12, color: Colors.grey.shade600),
+                      Icon(
+                        Icons.person,
+                        size: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       Text(
                         ' ${option.capacity}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -323,10 +345,12 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
         prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: Theme.of(context).colorScheme.surfaceContainer,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
       ),
     );

@@ -63,7 +63,7 @@ class TripStatusScreen extends ConsumerWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Theme.of(context).shadowColor.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -5),
                   ),
@@ -91,8 +91,10 @@ class TripStatusScreen extends ConsumerWidget {
                         );
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                         minimumSize: const Size.fromHeight(48),
                       ),
                       child: const Text('Cancel Request'),
@@ -117,25 +119,25 @@ class TripStatusScreen extends ConsumerWidget {
         statusTitle = 'Looking for a driver';
         statusSubtitle = 'We are matching you with nearby drivers';
         icon = Icons.search;
-        color = Colors.orange;
+        color = Theme.of(context).colorScheme.secondary;
         break;
       case TripStatus.accepted:
         statusTitle = 'Driver is on the way';
         statusSubtitle = 'Driver has accepted your request';
         icon = Icons.directions_car;
-        color = Colors.blue;
+        color = Theme.of(context).colorScheme.primary;
         break;
       case TripStatus.onWay:
         statusTitle = 'Trip in Progress';
         statusSubtitle = 'You are on your way to the destination';
         icon = Icons.near_me;
-        color = Colors.purple;
+        color = Theme.of(context).colorScheme.tertiary; // Or primary
         break;
       case TripStatus.completed:
         statusTitle = 'Trip Completed';
         statusSubtitle = 'You have arrived at your destination';
         icon = Icons.check_circle;
-        color = Colors.green;
+        color = Theme.of(context).colorScheme.primary;
         break;
     }
 
@@ -189,7 +191,11 @@ class TripStatusScreen extends ConsumerWidget {
             ),
             Row(
               children: [
-                const Icon(Icons.star, size: 16, color: Colors.amber),
+                Icon(
+                  Icons.star,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(width: 4),
                 Text('4.8', style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(width: 8),

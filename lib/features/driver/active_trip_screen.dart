@@ -58,7 +58,8 @@ class ActiveTripScreen extends ConsumerWidget {
                 icon: const Icon(Icons.check),
                 label: const Text('Complete Trip'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   minimumSize: const Size.fromHeight(56),
                 ),
               ),
@@ -75,15 +76,15 @@ class ActiveTripScreen extends ConsumerWidget {
     switch (trip.status) {
       case TripStatus.accepted:
         statusText = 'Head to Pickup';
-        statusColor = Colors.blue;
+        statusColor = Theme.of(context).colorScheme.tertiary;
         break;
       case TripStatus.onWay:
         statusText = 'On the Way';
-        statusColor = Colors.purple;
+        statusColor = Theme.of(context).colorScheme.primary;
         break;
       default:
         statusText = 'Unknown';
-        statusColor = Colors.grey;
+        statusColor = Theme.of(context).colorScheme.outline;
     }
 
     return Card(
@@ -95,7 +96,7 @@ class ActiveTripScreen extends ConsumerWidget {
             Text(
               statusText,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -103,7 +104,7 @@ class ActiveTripScreen extends ConsumerWidget {
             Text(
               'Est. arrival in 15 mins',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withOpacity(0.9),
+                color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
               ),
             ),
           ],
@@ -120,11 +121,14 @@ class ActiveTripScreen extends ConsumerWidget {
           children: [
             Column(
               children: [
-                const Icon(Icons.my_location, color: Colors.blue),
+                Icon(
+                  Icons.my_location,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 Container(
                   height: 40,
                   width: 2,
-                  color: Colors.grey.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
                 ),
               ],
             ),
@@ -135,9 +139,9 @@ class ActiveTripScreen extends ConsumerWidget {
                 children: [
                   Text(
                     'Pickup',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelLarge?.copyWith(color: Colors.grey),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -152,7 +156,7 @@ class ActiveTripScreen extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.location_on, color: Colors.red),
+            Icon(Icons.location_on, color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -160,9 +164,9 @@ class ActiveTripScreen extends ConsumerWidget {
                 children: [
                   Text(
                     'Drop-off',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelLarge?.copyWith(color: Colors.grey),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(

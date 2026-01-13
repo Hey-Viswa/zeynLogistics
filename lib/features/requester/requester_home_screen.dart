@@ -17,9 +17,18 @@ class RequesterHomeScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Hello,\nRequester',
-            style: Theme.of(context).textTheme.headlineMedium,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Hello,\nRequester',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              IconButton(
+                onPressed: () => context.push('/profile'),
+                icon: const CircleAvatar(child: Icon(Icons.person)),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           if (activeTrips.isEmpty)

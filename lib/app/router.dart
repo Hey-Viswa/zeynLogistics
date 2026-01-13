@@ -11,6 +11,9 @@ import '../features/requester/book_ride_screen.dart';
 import '../features/requester/trip_status_screen.dart';
 import '../features/driver/active_trip_screen.dart';
 import '../shared/data/trip_provider.dart';
+import '../features/driver/driver_verification_screen.dart';
+import '../features/driver/verification_pending_screen.dart';
+import '../features/profile/profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -52,6 +55,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           final trip = state.extra as Trip;
           return ActiveTripScreen(trip: trip);
         },
+      ),
+      GoRoute(
+        path: '/driver-verification',
+        builder: (context, state) => const DriverVerificationScreen(),
+      ),
+      GoRoute(
+        path: '/verification-pending',
+        builder: (context, state) => const VerificationPendingScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
   );
