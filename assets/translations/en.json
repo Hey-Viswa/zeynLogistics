@@ -1,0 +1,26 @@
+{
+    "profile": {
+        "title": "Profile & Settings",
+        "driver": "Driver",
+        "requester": "Requester",
+        "account_info": "Account Info",
+        "phone": "Phone Number",
+        "email": "Email",
+        "driver_settings": "Driver Settings",
+        "vehicle_info": "Vehicle Information",
+        "documents": "Documents",
+        "requester_settings": "Requester Settings",
+        "saved_places": "Saved Places",
+        "payment_methods": "Payment Methods",
+        "app_settings": "App Settings",
+        "notifications": "Notifications",
+        "app_theme": "App Theme",
+        "language": "Language",
+        "actions": "Actions",
+        "logout": "Log Out",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "name": "Name"
+    }
+}

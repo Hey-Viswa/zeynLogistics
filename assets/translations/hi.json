@@ -1,0 +1,26 @@
+{
+    "profile": {
+        "title": "प्रोफाइल और सेटिंग्स",
+        "driver": "ड्राइवर",
+        "requester": "अनुरोधकर्ता",
+        "account_info": "खाता जानकारी",
+        "phone": "फोन नंबर",
+        "email": "ईमेल",
+        "driver_settings": "ड्राइवर सेटिंग्स",
+        "vehicle_info": "वाहन की जानकारी",
+        "documents": "दस्तावेज़",
+        "requester_settings": "अनुरोधकर्ता सेटिंग्स",
+        "saved_places": "सहेजे गए स्थान",
+        "payment_methods": "भुगतान के तरीके",
+        "app_settings": "ऐप सेटिंग्स",
+        "notifications": "सूचनाएं",
+        "app_theme": "ऐप थीम",
+        "language": "भाषा",
+        "actions": "कथित कार्य",
+        "logout": "लॉग आउट",
+        "edit": "संपादित करें",
+        "save": "सहेजें",
+        "cancel": "रद्द करें",
+        "name": "नाम"
+    }
+}

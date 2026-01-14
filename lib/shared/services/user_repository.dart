@@ -31,4 +31,36 @@ class UserRepository {
     final doc = await _firestore.collection('users').doc(uid).get();
     return doc.exists;
   }
+
+  Future<void> updateSavedPlaces(String uid, List<String> places) async {
+    await _firestore.collection('users').doc(uid).update({
+      'savedPlaces': places,
+    });
+  }
+
+  Future<void> updatePaymentMethods(
+    String uid,
+    Map<String, dynamic> methods,
+  ) async {
+    await _firestore.collection('users').doc(uid).update({
+      'paymentMethods': methods,
+    });
+  }
+
+  Stream<UserModel?> userStream(String uid) {
+    return _firestore.collection('users').doc(uid).snapshots().map((doc) {
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    });
+  }
 }
+
+final userStreamProvider = StreamProvider.family<UserModel?, String>((
+  ref,
+  uid,
+) {
+  final repo = ref.watch(userRepositoryProvider);
+  return repo.userStream(uid);
+});

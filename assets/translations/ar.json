@@ -1,0 +1,26 @@
+{
+    "profile": {
+        "title": "الملف الشخصي والإعدادات",
+        "driver": "سائق",
+        "requester": "مقدم الطلب",
+        "account_info": "معلومات الحساب",
+        "phone": "رقم الهاتف",
+        "email": "البريد الإلكتروني",
+        "driver_settings": "إعدادات السائق",
+        "vehicle_info": "معلومات المركبة",
+        "documents": "المستندات",
+        "requester_settings": "إعدادات مقدم الطلب",
+        "saved_places": "الأماكن المحفوظة",
+        "payment_methods": "طرق الدفع",
+        "app_settings": "إعدادات التطبيق",
+        "notifications": "إشعارات",
+        "app_theme": "مظهر التطبيق",
+        "language": "لغة",
+        "actions": "أجراءات",
+        "logout": "تسجيل الخروج",
+        "edit": "تعديل",
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "name": "اسم"
+    }
+}

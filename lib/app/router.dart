@@ -16,6 +16,10 @@ import '../shared/data/trip_provider.dart';
 import '../features/driver/driver_verification_screen.dart';
 import '../features/driver/verification_pending_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/profile/edit_profile_screen.dart';
+import '../features/profile/saved_places_screen.dart';
+import '../features/profile/payment_methods_screen.dart';
+import '../shared/data/user_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -79,6 +83,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         pageBuilder: (context, state) => _buildPage(const ProfileScreen()),
+      ),
+      GoRoute(
+        path: '/edit-profile',
+        pageBuilder: (context, state) {
+          final user = state.extra as UserModel;
+          return _buildPage(EditProfileScreen(user: user));
+        },
+      ),
+      GoRoute(
+        path: '/saved-places',
+        pageBuilder: (context, state) {
+          final user = state.extra as UserModel;
+          return _buildPage(SavedPlacesScreen(user: user));
+        },
+      ),
+      GoRoute(
+        path: '/payment-methods',
+        pageBuilder: (context, state) {
+          final user = state.extra as UserModel;
+          return _buildPage(PaymentMethodsScreen(user: user));
+        },
       ),
     ],
   );

@@ -9,6 +9,8 @@ class UserModel {
   final String? role; // 'driver' or 'requester'
   final bool isVerified;
   final DateTime createdAt;
+  final List<String> savedPlaces;
+  final Map<String, dynamic> paymentMethods;
 
   UserModel({
     required this.id,
@@ -19,6 +21,8 @@ class UserModel {
     this.role,
     this.isVerified = false,
     required this.createdAt,
+    this.savedPlaces = const [],
+    this.paymentMethods = const {},
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +35,8 @@ class UserModel {
       'role': role,
       'isVerified': isVerified,
       'createdAt': Timestamp.fromDate(createdAt),
+      'savedPlaces': savedPlaces,
+      'paymentMethods': paymentMethods,
     };
   }
 
@@ -44,6 +50,8 @@ class UserModel {
       role: map['role'],
       isVerified: map['isVerified'] ?? false,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      savedPlaces: List<String>.from(map['savedPlaces'] ?? []),
+      paymentMethods: Map<String, dynamic>.from(map['paymentMethods'] ?? {}),
     );
   }
 
@@ -53,6 +61,8 @@ class UserModel {
     String? photoUrl,
     String? role,
     bool? isVerified,
+    List<String>? savedPlaces,
+    Map<String, dynamic>? paymentMethods,
   }) {
     return UserModel(
       id: id,
@@ -63,6 +73,8 @@ class UserModel {
       role: role ?? this.role,
       isVerified: isVerified ?? this.isVerified,
       createdAt: createdAt,
+      savedPlaces: savedPlaces ?? this.savedPlaces,
+      paymentMethods: paymentMethods ?? this.paymentMethods,
     );
   }
 }

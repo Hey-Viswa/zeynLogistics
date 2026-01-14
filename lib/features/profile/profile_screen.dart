@@ -2,236 +2,268 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:image_picker/image_picker.dart';
 import '../onboarding/role_provider.dart';
 import '../../shared/theme/theme_provider.dart';
 import '../../shared/services/auth_service.dart';
+import '../../shared/services/user_repository.dart';
+import '../../shared/services/storage_service.dart';
+import '../../shared/data/user_model.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    // Sign out from Firebase
     await ref.read(authServiceProvider).signOut();
-
-    // Clear local prefs
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    if (context.mounted) context.go('/intro');
+  }
 
-    // Navigate to Intro/Splas
-    if (context.mounted) {
-      context.go('/intro');
+  Future<void> _pickAndUploadImage(
+    BuildContext context,
+    WidgetRef ref,
+    String uid,
+  ) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Uploading image...')));
+      }
+
+      final url = await ref
+          .read(storageServiceProvider)
+          .uploadProfileImage(uid, image);
+      if (url != null) {
+        await ref.read(userRepositoryProvider).updateUser(uid, {
+          'photoUrl': url,
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final role = ref.watch(roleProvider);
+    // Current User ID
+    final user = ref.watch(authStateProvider).value;
+
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final userAsync = ref.watch(userStreamProvider(user.uid));
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Profile & Settings'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Avatar & Name
-            Center(
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
+      appBar: AppBar(title: Text('profile.title'.tr()), centerTitle: true),
+      body: userAsync.when(
+        data: (userData) {
+          if (userData == null)
+            return const Center(child: Text('User not found'));
+          final role = userData.role == 'driver'
+              ? UserRole.driver
+              : UserRole.requester;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                // Avatar & Name
+                Center(
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: () =>
+                            _pickAndUploadImage(context, ref, userData.id),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: userData.photoUrl != null
+                              ? NetworkImage(userData.photoUrl!)
+                              : null,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          child: userData.photoUrl == null
+                              ? Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        userData.name ?? 'Guest',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Chip(
+                        label: Text(
+                          role == UserRole.driver
+                              ? 'profile.driver'.tr()
+                              : 'profile.requester'.tr(),
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.secondaryContainer,
+                        side: BorderSide.none,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'John Doe',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                ),
+                const SizedBox(height: 32),
+
+                // Account Section
+                _buildSectionHeader(context, 'profile.account_info'.tr()),
+                const SizedBox(height: 8),
+                _buildListTile(
+                  context,
+                  icon: Icons.phone,
+                  title: 'profile.phone'.tr(),
+                  subtitle: userData.phoneNumber.isNotEmpty
+                      ? userData.phoneNumber
+                      : 'Not set',
+                  trailing: Icon(
+                    Icons.edit,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onTap: () => context.push('/edit-profile', extra: userData),
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.email,
+                  title: 'profile.email'.tr(),
+                  subtitle: userData.email ?? 'Not set',
+                  onTap: () => context.push('/edit-profile', extra: userData),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Role Specific Settings
+                if (role == UserRole.driver) ...[
+                  _buildSectionHeader(context, 'profile.driver_settings'.tr()),
+                  const SizedBox(height: 8),
+                  _buildListTile(
+                    context,
+                    icon: Icons.directions_car,
+                    title: 'profile.vehicle_info'.tr(),
+                    subtitle: 'Toyota Van (Verified)', // Placeholder
+                    trailing: const Icon(Icons.chevron_right),
+                  ),
+                  _buildListTile(
+                    context,
+                    icon: Icons.folder_shared,
+                    title: 'profile.documents'.tr(),
+                    subtitle: 'Manage uploaded ID & License',
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/driver-verification'),
+                  ),
+                ] else ...[
+                  _buildSectionHeader(
+                    context,
+                    'profile.requester_settings'.tr(),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildListTile(
+                    context,
+                    icon: Icons.bookmark,
+                    title: 'profile.saved_places'.tr(),
+                    subtitle: '${userData.savedPlaces.length} places',
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/saved-places', extra: userData),
+                  ),
+                  _buildListTile(
+                    context,
+                    icon: Icons.payment,
+                    title: 'profile.payment_methods'.tr(),
+                    subtitle: 'Cash, UPI', // Placeholder
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () =>
+                        context.push('/payment-methods', extra: userData),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // Settings Section
+                _buildSectionHeader(context, 'profile.app_settings'.tr()),
+                const SizedBox(height: 8),
+                _buildListTile(
+                  context,
+                  icon: Icons.notifications,
+                  title: 'profile.notifications'.tr(),
+                  trailing: Switch(value: true, onChanged: (v) {}),
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.dark_mode,
+                  title: 'profile.app_theme'.tr(),
+                  subtitle: ref.watch(themeProvider).name.toUpperCase(),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showThemePicker(context, ref),
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.language,
+                  title: 'profile.language'.tr(),
+                  subtitle: context.locale.languageCode.toUpperCase(),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showLanguagePicker(context),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Actions
+                _buildSectionHeader(context, 'profile.actions'.tr()),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Icon(
+                    Icons.logout,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    'profile.logout'.tr(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Chip(
-                    label: Text(
-                      role == UserRole.driver ? 'Driver' : 'Requester',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSecondaryContainer,
-                      ),
-                    ),
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.secondaryContainer,
-                    side: BorderSide.none,
+                  onTap: () => _logout(context, ref),
+                  tileColor: Theme.of(
+                    context,
+                  ).colorScheme.errorContainer.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Account Section
-            _buildSectionHeader(context, 'Account Info'),
-            const SizedBox(height: 8),
-            _buildListTile(
-              context,
-              icon: Icons.phone,
-              title: 'Phone Number',
-              subtitle: '+91 98765 43210',
-            ),
-            _buildListTile(
-              context,
-              icon: Icons.email,
-              title: 'Email',
-              subtitle: 'john.doe@example.com',
-            ),
-
-            const SizedBox(height: 24),
-
-            // Role Specific Settings
-            if (role == UserRole.driver) ...[
-              _buildSectionHeader(context, 'Driver Settings'),
-              const SizedBox(height: 8),
-              _buildListTile(
-                context,
-                icon: Icons.directions_car,
-                title: 'Vehicle Information',
-                subtitle: 'Toyota Van (Verified)',
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.folder_shared,
-                title: 'Documents',
-                subtitle: 'Manage uploaded ID & License',
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/driver-verification'),
-              ),
-            ] else ...[
-              _buildSectionHeader(context, 'Requester Settings'),
-              const SizedBox(height: 8),
-              _buildListTile(
-                context,
-                icon: Icons.bookmark,
-                title: 'Saved Places',
-                subtitle: 'Home, Work, Gym',
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              _buildListTile(
-                context,
-                icon: Icons.payment,
-                title: 'Payment Methods',
-                subtitle: 'Cash, UPI',
-                trailing: const Icon(Icons.chevron_right),
-              ),
-            ],
-
-            const SizedBox(height: 24),
-
-            // Settings Section
-            _buildSectionHeader(context, 'App Settings'),
-            const SizedBox(height: 8),
-            _buildListTile(
-              context,
-              icon: Icons.notifications,
-              title: 'Notifications',
-              trailing: Switch(value: true, onChanged: (v) {}),
-            ),
-            _buildListTile(
-              context,
-              icon: Icons.dark_mode,
-              title: 'App Theme',
-              subtitle: ref.watch(themeProvider).name.toUpperCase(),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) => Container(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Select Theme',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildThemeOption(
-                          context,
-                          ref,
-                          'System Default',
-                          ThemeMode.system,
-                        ),
-                        _buildThemeOption(
-                          context,
-                          ref,
-                          'Light Mode',
-                          ThemeMode.light,
-                        ),
-                        _buildThemeOption(
-                          context,
-                          ref,
-                          'Dark Mode',
-                          ThemeMode.dark,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            _buildListTile(
-              context,
-              icon: Icons.language,
-              title: 'Language',
-              subtitle: 'English (India)',
-              trailing: const Icon(Icons.chevron_right),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Actions
-            _buildSectionHeader(context, 'Actions'),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: Icon(
-                Icons.logout,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              title: Text(
-                'Log Out',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
-              onTap: () => _logout(context, ref),
-              tileColor: Theme.of(
-                context,
-              ).colorScheme.errorContainer.withOpacity(0.1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+                const SizedBox(height: 24),
+                Text(
+                  'Version 1.0.0 (Build 12)',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Version 1.0.0 (Build 12)',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }
@@ -271,6 +303,29 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  void _showThemePicker(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Theme',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+            _buildThemeOption(context, ref, 'System Default', ThemeMode.system),
+            _buildThemeOption(context, ref, 'Light Mode', ThemeMode.light),
+            _buildThemeOption(context, ref, 'Dark Mode', ThemeMode.dark),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildThemeOption(
     BuildContext context,
     WidgetRef ref,
@@ -285,6 +340,48 @@ class ProfileScreen extends ConsumerWidget {
           : null,
       onTap: () {
         ref.read(themeProvider.notifier).setTheme(mode);
+        context.pop();
+      },
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Language',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+            _buildLanguageOption(context, 'English', const Locale('en')),
+            _buildLanguageOption(context, 'Hindi', const Locale('hi')),
+            _buildLanguageOption(context, 'Urdu', const Locale('ur')),
+            _buildLanguageOption(context, 'Arabic', const Locale('ar')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(
+    BuildContext context,
+    String title,
+    Locale locale,
+  ) {
+    final currentLocale = context.locale;
+    return ListTile(
+      title: Text(title),
+      trailing: currentLocale == locale
+          ? const Icon(Icons.check, color: Colors.green)
+          : null,
+      onTap: () {
+        context.setLocale(locale);
         context.pop();
       },
     );

@@ -1,0 +1,26 @@
+{
+    "profile": {
+        "title": "پروفائل اور ترتیبات",
+        "driver": "ڈرائیور",
+        "requester": "درخواست گزار",
+        "account_info": "اکاؤنٹ کی معلومات",
+        "phone": "فون نمبر",
+        "email": "ای میل",
+        "driver_settings": "ڈرائیور کی ترتیبات",
+        "vehicle_info": "گاڑی کی معلومات",
+        "documents": "دستاویزات",
+        "requester_settings": "درخواست گزار کی ترتیبات",
+        "saved_places": "محفوظ مقامات",
+        "payment_methods": "ادائیگی کے طریقے",
+        "app_settings": "ایپ کی ترتیبات",
+        "notifications": "نوٹیفیکیشن",
+        "app_theme": "ایپ تھیم",
+        "language": "زبان",
+        "actions": "کام",
+        "logout": "لاگ آؤٹ",
+        "edit": "ترمیم کریں",
+        "save": "محفوظ کریں",
+        "cancel": "منسوخ کریں",
+        "name": "نام"
+    }
+}
