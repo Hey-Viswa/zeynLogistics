@@ -3,16 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
+import '../../shared/services/trip_repository.dart';
+import '../../shared/services/auth_service.dart';
+import '../../shared/services/user_repository.dart';
+
+final userTripsProvider = StreamProvider<List<Trip>>((ref) {
+  final user = ref.watch(authStateProvider).value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(tripRepositoryProvider).streamUserTrips(user.uid);
+});
 
 class RequesterHomeScreen extends ConsumerWidget {
   const RequesterHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trips = ref.watch(tripProvider);
-    final activeTrips = trips
-        .where((t) => t.status != TripStatus.completed)
-        .toList();
+    final userAsync = ref.watch(
+      userStreamProvider(ref.watch(authStateProvider).value?.uid ?? ''),
+    );
+    final tripsAsync = ref.watch(userTripsProvider);
 
     return SingleChildScrollView(
       child: Column(
@@ -23,7 +32,7 @@ class RequesterHomeScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Hello,\nRequester',
+                  'Hello,\n${userAsync.value?.name?.split(' ').first ?? 'Requester'}',
                   style: Theme.of(
                     context,
                   ).textTheme.headlineMedium?.copyWith(fontSize: 28.sp),
@@ -34,17 +43,40 @@ class RequesterHomeScreen extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 icon: CircleAvatar(
-                  child: Icon(Icons.person, size: 24.sp),
                   radius: 20.r,
+                  backgroundImage: userAsync.value?.photoUrl != null
+                      ? NetworkImage(userAsync.value!.photoUrl!)
+                      : null,
+                  child: userAsync.value?.photoUrl == null
+                      ? Icon(Icons.person, size: 24.sp)
+                      : null,
                 ),
               ),
             ],
           ),
           SizedBox(height: 24.h),
-          if (activeTrips.isEmpty)
-            _buildEmptyState(context)
-          else
-            ...activeTrips.map((trip) => _buildTripCard(context, trip)),
+          tripsAsync.when(
+            data: (trips) {
+              final activeTrips = trips
+                  .where(
+                    (t) =>
+                        t.status != TripStatus.completed &&
+                        t.status != TripStatus.canceled,
+                  )
+                  .toList();
+
+              if (activeTrips.isEmpty) {
+                return _buildEmptyState(context);
+              }
+              return Column(
+                children: activeTrips
+                    .map((trip) => _buildTripCard(context, trip))
+                    .toList(),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+          ),
 
           SizedBox(height: 24.h),
           FilledButton.icon(
@@ -156,6 +188,10 @@ class RequesterHomeScreen extends ConsumerWidget {
       case TripStatus.completed:
         color = Colors.green;
         label = 'Completed';
+        break;
+      case TripStatus.canceled:
+        color = Colors.red;
+        label = 'Canceled';
         break;
     }
 

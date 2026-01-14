@@ -22,4 +22,22 @@ class StorageService {
       return null;
     }
   }
+
+  Future<String?> uploadDriverDocument(
+    String uid,
+    String docType,
+    XFile imageFile,
+  ) async {
+    try {
+      final ref = _storage
+          .ref()
+          .child('driver_documents')
+          .child(uid)
+          .child('$docType.jpg');
+      await ref.putFile(File(imageFile.path));
+      return await ref.getDownloadURL();
+    } catch (e) {
+      return null;
+    }
+  }
 }

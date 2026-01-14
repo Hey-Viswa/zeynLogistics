@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
+import '../../shared/services/trip_repository.dart';
 import '../../shared/widgets/map_placeholder.dart';
+
+final tripStreamProvider = StreamProvider.family<Trip?, String>((ref, tripId) {
+  return ref.watch(tripRepositoryProvider).streamTrip(tripId);
+});
 
 class TripStatusScreen extends ConsumerWidget {
   final String tripId;
@@ -12,27 +17,7 @@ class TripStatusScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the specific trip.
-    final trip = ref
-        .watch(tripProvider)
-        .firstWhere(
-          (t) => t.id == tripId,
-          orElse: () => Trip(
-            id: 'error',
-            pickup: 'Unknown',
-            drop: 'Unknown',
-            vehicle: 'Unknown',
-            date: DateTime.now(),
-            status: TripStatus.waiting,
-          ),
-        );
-
-    if (trip.id == 'error') {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Trip Not Found')),
-        body: const Center(child: Text('Trip not found')),
-      );
-    }
+    final tripAsync = ref.watch(tripStreamProvider(tripId));
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -40,75 +25,90 @@ class TripStatusScreen extends ConsumerWidget {
         title: const Text('Trip Status'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, size: 24.sp),
-          onPressed: () => context.pop(),
+          // If canceled or completed, go home. If waiting, maybe confirm cancel?
+          onPressed: () => context.go('/home'),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: EdgeInsets.all(24.w),
-              child: MapPlaceholder(
-                label: 'Tracking route (coming soon)',
-                icon: Icons.navigation_outlined,
-                height: 220.h,
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).shadowColor.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
+      body: tripAsync.when(
+        data: (trip) {
+          if (trip == null) {
+            return const Center(child: Text('Trip not found or canceled.'));
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(24.w),
+                  child: MapPlaceholder(
+                    label: 'Tracking route (coming soon)',
+                    icon: Icons.navigation_outlined,
+                    height: 220.h,
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatusHeader(context, trip),
-                  SizedBox(height: 24.h),
-                  if (trip.driverId != null) ...[
-                    _buildDriverInfo(context),
-                    Divider(height: 32.h),
-                  ],
-                  _buildLocationInfo(context, trip),
-                  SizedBox(height: 24.h),
-                  if (trip.status == TripStatus.waiting)
-                    OutlinedButton(
-                      onPressed: () {
-                        // Mock cancel logic would go here
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Cancel feature coming soon'),
-                          ),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        minimumSize: Size.fromHeight(48.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
-                      child: Text(
-                        'Cancel Request',
-                        style: TextStyle(fontSize: 16.sp),
-                      ),
+                ),
+                Container(
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24.r),
                     ),
-                ],
-              ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).shadowColor.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildStatusHeader(context, trip),
+                      SizedBox(height: 24.h),
+                      if (trip.driverId != null) ...[
+                        _buildDriverInfo(context, trip),
+                        Divider(height: 32.h),
+                      ],
+                      _buildLocationInfo(context, trip),
+                      SizedBox(height: 24.h),
+                      if (trip.status == TripStatus.waiting)
+                        OutlinedButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Cancel feature coming soon'),
+                              ),
+                            );
+                            // Future: Call tripRepository.updateTripStatus(canceled)
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
+                            side: BorderSide(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            minimumSize: Size.fromHeight(48.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel Request',
+                            style: TextStyle(fontSize: 16.sp),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }
@@ -143,6 +143,12 @@ class TripStatusScreen extends ConsumerWidget {
         statusSubtitle = 'You have arrived at your destination';
         icon = Icons.check_circle;
         color = Theme.of(context).colorScheme.primary;
+        break;
+      case TripStatus.canceled:
+        statusTitle = 'Trip Canceled';
+        statusSubtitle = 'This trip was canceled';
+        icon = Icons.cancel;
+        color = Theme.of(context).colorScheme.error;
         break;
     }
 
@@ -182,7 +188,7 @@ class TripStatusScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDriverInfo(BuildContext context) {
+  Widget _buildDriverInfo(BuildContext context, Trip trip) {
     return Row(
       children: [
         CircleAvatar(
@@ -194,7 +200,7 @@ class TripStatusScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'John Doe',
+              trip.driverName ?? 'Driver',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 16.sp,
@@ -203,20 +209,13 @@ class TripStatusScreen extends ConsumerWidget {
             Row(
               children: [
                 Icon(
-                  Icons.star,
-                  size: 16.sp,
+                  Icons.phone,
+                  size: 14.sp,
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 SizedBox(width: 4.w),
                 Text(
-                  '4.8',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontSize: 14.sp),
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  '• Toyota Van (XYZ-123)',
+                  trip.driverPhone ?? '',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 14.sp,

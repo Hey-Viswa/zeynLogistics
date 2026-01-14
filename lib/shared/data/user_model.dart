@@ -11,6 +11,7 @@ class UserModel {
   final DateTime createdAt;
   final List<String> savedPlaces;
   final Map<String, dynamic> paymentMethods;
+  final Map<String, String> documents; // New field for driver docs
 
   UserModel({
     required this.id,
@@ -23,6 +24,7 @@ class UserModel {
     required this.createdAt,
     this.savedPlaces = const [],
     this.paymentMethods = const {},
+    this.documents = const {},
   });
 
   Map<String, dynamic> toMap() {
@@ -37,6 +39,7 @@ class UserModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'savedPlaces': savedPlaces,
       'paymentMethods': paymentMethods,
+      'documents': documents,
     };
   }
 
@@ -52,6 +55,7 @@ class UserModel {
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       savedPlaces: List<String>.from(map['savedPlaces'] ?? []),
       paymentMethods: Map<String, dynamic>.from(map['paymentMethods'] ?? {}),
+      documents: Map<String, String>.from(map['documents'] ?? {}),
     );
   }
 
@@ -63,6 +67,7 @@ class UserModel {
     bool? isVerified,
     List<String>? savedPlaces,
     Map<String, dynamic>? paymentMethods,
+    Map<String, String>? documents,
   }) {
     return UserModel(
       id: id,
@@ -75,6 +80,7 @@ class UserModel {
       createdAt: createdAt,
       savedPlaces: savedPlaces ?? this.savedPlaces,
       paymentMethods: paymentMethods ?? this.paymentMethods,
+      documents: documents ?? this.documents,
     );
   }
 }

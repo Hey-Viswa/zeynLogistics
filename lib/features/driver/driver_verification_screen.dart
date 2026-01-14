@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:image_picker/image_picker.dart';
+import '../../shared/services/storage_service.dart';
+import '../../shared/services/user_repository.dart';
+import '../../shared/services/auth_service.dart';
 import '../onboarding/role_provider.dart';
 
 class DriverVerificationScreen extends ConsumerStatefulWidget {
@@ -16,36 +20,73 @@ class DriverVerificationScreen extends ConsumerStatefulWidget {
 
 class _DriverVerificationScreenState
     extends ConsumerState<DriverVerificationScreen> {
-  final Map<String, bool> _uploadedDocs = {
-    'Identity (Aadhar)': false,
-    'Driving License': false,
-    'Vehicle Registration': false,
-    'Insurance Policy': false,
+  bool _isUploading = false;
+
+  // Track the actual URLs of uploaded documents
+  final Map<String, String?> _documentUrls = {
+    'Identity (Aadhar)': null,
+    'Driving License': null,
+    'Vehicle Registration': null,
+    'Insurance Policy': null,
   };
 
-  bool get _isComplete => !_uploadedDocs.values.contains(false);
+  bool get _isComplete => !_documentUrls.values.contains(null);
 
   Future<void> _uploadDoc(String key) async {
-    // Simulate upload delay
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      _uploadedDocs[key] = true;
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$key uploaded successfully'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final user = ref.read(authServiceProvider).currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      // 1. Upload to Storage
+      final url = await ref
+          .read(storageServiceProvider)
+          .uploadDriverDocument(user.uid, key, image);
+
+      if (url != null) {
+        setState(() {
+          _documentUrls[key] = url;
+        });
+
+        // 2. Update Firestore
+        // We filter out nulls to pass a valid Map<String, String>
+        final validDocs = Map<String, String>.fromEntries(
+          _documentUrls.entries
+              .where((e) => e.value != null)
+              .map((e) => MapEntry(e.key, e.value!)),
+        );
+
+        await ref
+            .read(userRepositoryProvider)
+            .updateUserDocuments(user.uid, validDocs);
+
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$key uploaded successfully')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      }
+    } finally {
+      setState(() => _isUploading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final completedCount = _uploadedDocs.values.where((e) => e).length;
-    final totalCount = _uploadedDocs.length;
+    // Calculate progress based on non-null URLs
+    final completedCount = _documentUrls.values.where((e) => e != null).length;
+    final totalCount = _documentUrls.length;
     final progress = completedCount / totalCount;
 
     return Scaffold(
@@ -93,8 +134,9 @@ class _DriverVerificationScreenState
             ),
             SizedBox(height: 24.h),
             // Doc List
-            ..._uploadedDocs.keys.map((key) {
-              final isUploaded = _uploadedDocs[key]!;
+            if (_isUploading) const LinearProgressIndicator(),
+            ..._documentUrls.keys.map((key) {
+              final isUploaded = _documentUrls[key] != null;
               return Padding(
                 padding: EdgeInsets.only(bottom: 16.h),
                 child: _buildDocCard(key, isUploaded),

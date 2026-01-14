@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:uuid/uuid.dart';
 import '../../shared/data/trip_provider.dart';
+import '../../shared/services/trip_repository.dart';
+import '../../shared/services/auth_service.dart';
+import '../../shared/services/user_repository.dart';
 
 class BookRideScreen extends ConsumerStatefulWidget {
   const BookRideScreen({super.key});
@@ -18,6 +22,7 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
   final _notesController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String _selectedVehicle = 'Bike';
+  final _uuid = const Uuid();
 
   final List<VehicleOption> _vehicleOptions = [
     const VehicleOption(
@@ -52,195 +57,222 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // We need the current user to get their ID/Name/Phone
+    final user = ref
+        .watch(
+          userStreamProvider(ref.watch(authStateProvider).value?.uid ?? ''),
+        )
+        .value;
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: const Text('Book a Ride')),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Your Route',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 24.sp,
-              ),
-            ),
-            SizedBox(height: 24.h),
-            // Connected Inputs
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(24.r),
-              ),
+      body: user == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(24.w),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Pickup Input
-                  Row(
-                    children: [
-                      Column(
+                  Text(
+                    'Your Route',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24.sp,
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+                  Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Column(
+                              children: [
+                                Icon(
+                                  Icons.my_location,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 24.sp,
+                                ),
+                                Container(
+                                  height: 40.h,
+                                  width: 2.w,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outlineVariant.withOpacity(0.5),
+                                ),
+                              ],
+                            ),
+                            SizedBox(width: 16.w),
+                            Expanded(
+                              child: _buildRouteField(
+                                controller: _pickupController,
+                                hint: 'Pickup Location',
+                                isPickup: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: Colors.redAccent,
+                              size: 24.sp,
+                            ),
+                            SizedBox(width: 16.w),
+                            Expanded(
+                              child: _buildRouteField(
+                                controller: _dropController,
+                                hint: 'Where to?',
+                                isPickup: false,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+                  Text(
+                    'Date & Time',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
+                  ),
+                  SizedBox(height: 8.h),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 30)),
+                      );
+                      if (date != null) {
+                        setState(() => _selectedDate = date);
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
                         children: [
-                          Icon(
-                            Icons.my_location,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 24.sp,
-                          ),
-                          Container(
-                            height: 40.h,
-                            width: 2.w,
-                            color: Theme.of(
+                          Icon(Icons.calendar_today, size: 20.sp),
+                          SizedBox(width: 16.w),
+                          Text(
+                            '${_selectedDate.year}-${_selectedDate.month}-${_selectedDate.day}',
+                            style: Theme.of(
                               context,
-                            ).colorScheme.outlineVariant.withOpacity(0.5),
+                            ).textTheme.bodyLarge?.copyWith(fontSize: 16.sp),
                           ),
                         ],
                       ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: _buildRouteField(
-                          controller: _pickupController,
-                          hint: 'Pickup Location',
-                          isPickup: true,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                  // Drop Input
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        color: Colors.redAccent,
-                        size: 24.sp,
+                  SizedBox(height: 24.h),
+                  _buildTextField(
+                    controller: _notesController,
+                    label: 'Notes (Optional)',
+                    icon: Icons.note_alt_outlined,
+                    maxLines: 3,
+                  ),
+                  SizedBox(height: 24.h),
+                  Text(
+                    'Choose your ride',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
+                  ),
+                  SizedBox(height: 16.h),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _vehicleOptions.length,
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: 12.h),
+                    itemBuilder: (context, index) {
+                      final option = _vehicleOptions[index];
+                      final isSelected = _selectedVehicle == option.name;
+                      return _buildVehicleOption(context, option, isSelected);
+                    },
+                  ),
+                  SizedBox(height: 32.h),
+                  FilledButton(
+                    onPressed: () async {
+                      if (_pickupController.text.isEmpty ||
+                          _dropController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text(
+                              'Please enter both Pickup and Drop locations',
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
+                          ),
+                        );
+                        return;
+                      }
+
+                      HapticFeedback.mediumImpact();
+
+                      final selectedOption = _vehicleOptions.firstWhere(
+                        (opt) => opt.name == _selectedVehicle,
+                      );
+
+                      final newTrip = Trip(
+                        id: _uuid.v4(),
+                        requesterId: user.id,
+                        requesterName: user.name ?? 'Guest',
+                        requesterPhone: user.phoneNumber,
+                        pickup: _pickupController.text,
+                        drop: _dropController.text,
+                        vehicle: _selectedVehicle,
+                        date: _selectedDate,
+                        price: selectedOption.price.toDouble(),
+                        status: TripStatus.waiting,
+                      );
+
+                      await ref
+                          .read(tripRepositoryProvider)
+                          .createTrip(newTrip);
+
+                      if (context.mounted) {
+                        // Pass the trip object for immediate display, though stream will pick it up
+                        context.push('/trip-status', extra: newTrip);
+                      }
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      padding: EdgeInsets.all(18.w),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: _buildRouteField(
-                          controller: _dropController,
-                          hint: 'Where to?',
-                          isPickup: false,
-                        ),
+                    ),
+                    child: Text(
+                      'Confirm Request',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 24.h),
-            Text(
-              'Date & Time',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
-            ),
-            SizedBox(height: 8.h),
-            InkWell(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 30)),
-                );
-                if (date != null) {
-                  setState(() => _selectedDate = date);
-                }
-              },
-              child: Container(
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 20.sp),
-                    SizedBox(width: 16.w),
-                    Text(
-                      '${_selectedDate.year}-${_selectedDate.month}-${_selectedDate.day}',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.copyWith(fontSize: 16.sp),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 24.h),
-            _buildTextField(
-              controller: _notesController,
-              label: 'Notes (Optional)',
-              icon: Icons.note_alt_outlined,
-              maxLines: 3,
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              'Choose your ride',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
-            ),
-            SizedBox(height: 16.h),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _vehicleOptions.length,
-              separatorBuilder: (context, index) => SizedBox(height: 12.h),
-              itemBuilder: (context, index) {
-                final option = _vehicleOptions[index];
-                final isSelected = _selectedVehicle == option.name;
-                return _buildVehicleOption(context, option, isSelected);
-              },
-            ),
-            SizedBox(height: 32.h),
-            FilledButton(
-              onPressed: () {
-                if (_pickupController.text.isEmpty ||
-                    _dropController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text(
-                        'Please enter both Pickup and Drop locations',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
-                  return;
-                }
-
-                HapticFeedback.mediumImpact();
-
-                ref
-                    .read(tripProvider.notifier)
-                    .bookRide(
-                      _pickupController.text,
-                      _dropController.text,
-                      _selectedVehicle,
-                      _selectedDate,
-                    );
-
-                context.pop();
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                padding: EdgeInsets.all(18.w),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              child: Text(
-                'Confirm Request',
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -278,7 +310,6 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
         ),
         child: Row(
           children: [
-            // Vehicle Icon (Mocking the 3D look with icons + background)
             Container(
               width: 60.w,
               height: 60.w,
@@ -293,7 +324,6 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
               ),
             ),
             SizedBox(width: 16.w),
-            // Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -47,6 +47,15 @@ class UserRepository {
     });
   }
 
+  Future<void> updateUserDocuments(
+    String uid,
+    Map<String, String> documents,
+  ) async {
+    await _firestore.collection('users').doc(uid).update({
+      'documents': documents,
+    });
+  }
+
   Stream<UserModel?> userStream(String uid) {
     return _firestore.collection('users').doc(uid).snapshots().map((doc) {
       if (doc.exists) {

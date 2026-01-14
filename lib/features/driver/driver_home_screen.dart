@@ -4,6 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
+import '../../shared/services/trip_repository.dart';
+import '../../shared/services/auth_service.dart';
+import '../../shared/services/user_repository.dart';
+
+final waitingTripsProvider = StreamProvider<List<Trip>>((ref) {
+  return ref.watch(tripRepositoryProvider).streamWaitingTrips();
+});
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
@@ -17,28 +24,13 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final trips = ref.watch(tripProvider);
+    // 1. Get current driver user data
+    final userAsync = ref.watch(
+      userStreamProvider(ref.watch(authStateProvider).value?.uid ?? ''),
+    );
 
-    // In a real app, we would filter by location or other criteria.
-    // For MVP, we show 'waiting' trips as available.
-    final availableTrips = trips
-        .where((t) => t.status == TripStatus.waiting)
-        .toList();
-
-    // Also check if driver has an active trip
-    final activeTrip = trips
-        .where(
-          (t) =>
-              (t.status == TripStatus.accepted ||
-                  t.status == TripStatus.onWay) &&
-              t.driverId == 'current_driver', // Mock ID
-        )
-        .firstOrNull;
-
-    if (activeTrip != null) {
-      // Redirect or show active trip card?
-      // For simplicity, we just show a prominent card to go to active trip.
-    }
+    // 2. Stream waiting trips
+    final waitingTripsAsync = ref.watch(waitingTripsProvider);
 
     return _isOnline
         ? SingleChildScrollView(
@@ -47,10 +39,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               children: [
                 _buildHeader(context),
                 SizedBox(height: 24.h),
-                if (activeTrip != null) ...[
-                  _buildActiveTripAlert(context, activeTrip),
-                  SizedBox(height: 24.h),
-                ],
                 Text(
                   'Available Requests',
                   style: Theme.of(
@@ -58,20 +46,36 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   ).textTheme.titleLarge?.copyWith(fontSize: 20.sp),
                 ),
                 SizedBox(height: 16.h),
-                if (availableTrips.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(top: 40.h),
-                    child: Center(
-                      child: Text(
-                        'No new requests nearby.',
-                        style: TextStyle(fontSize: 14.sp),
-                      ),
-                    ),
-                  )
-                else
-                  ...availableTrips.map(
-                    (trip) => _buildTripCard(context, ref, trip),
-                  ),
+                waitingTripsAsync.when(
+                  data: (trips) {
+                    if (trips.isEmpty) {
+                      return Padding(
+                        padding: EdgeInsets.only(top: 40.h),
+                        child: Center(
+                          child: Text(
+                            'No new requests nearby.',
+                            style: TextStyle(fontSize: 14.sp),
+                          ),
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: trips
+                          .map(
+                            (trip) => _buildTripCard(
+                              context,
+                              ref,
+                              trip,
+                              userAsync.value,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Center(child: Text('Error: $err')),
+                ),
               ],
             ),
           )
@@ -206,24 +210,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     );
   }
 
-  Widget _buildActiveTripAlert(BuildContext context, Trip trip) {
-    return Card(
-      color: Theme.of(context).colorScheme.tertiaryContainer,
-      margin: EdgeInsets.only(bottom: 24.h),
-      child: ListTile(
-        leading: Icon(Icons.navigation, size: 24.sp),
-        title: Text(
-          'Trip in Progress',
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text('To: ${trip.drop}', style: TextStyle(fontSize: 14.sp)),
-        trailing: Icon(Icons.chevron_right, size: 24.sp),
-        onTap: () => context.push('/active-trip', extra: trip),
-      ),
-    );
-  }
-
-  Widget _buildTripCard(BuildContext context, WidgetRef ref, Trip trip) {
+  Widget _buildTripCard(
+    BuildContext context,
+    WidgetRef ref,
+    Trip trip,
+    var driverUser,
+  ) {
     return Card(
       margin: EdgeInsets.only(bottom: 16.h),
       child: Padding(
@@ -232,6 +224,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Chip(
                   label: Text(trip.vehicle, style: TextStyle(fontSize: 12.sp)),
@@ -239,23 +232,54 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   padding: EdgeInsets.zero,
                   labelPadding: EdgeInsets.symmetric(horizontal: 8.w),
                 ),
+                Text(
+                  '\$${trip.price.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 16.h),
             _buildLocationRow(Icons.my_location, trip.pickup),
             SizedBox(height: 8.h),
             _buildLocationRow(Icons.location_on, trip.drop),
+            SizedBox(height: 16.h),
+            Row(
+              children: [
+                Icon(Icons.person, size: 16.sp, color: Colors.grey),
+                SizedBox(width: 4.w),
+                Text(
+                  'Rider: ${trip.requesterName}',
+                  style: TextStyle(fontSize: 14.sp),
+                ),
+              ],
+            ),
             SizedBox(height: 24.h),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () {
+                onPressed: () async {
+                  if (driverUser == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error: Driver info not loaded'),
+                      ),
+                    );
+                    return;
+                  }
                   HapticFeedback.mediumImpact();
-                  ref
-                      .read(tripProvider.notifier)
-                      .acceptRide(trip.id, 'current_driver');
-                  // Navigate to active trip
-                  context.push('/active-trip', extra: trip);
+
+                  // Accept logic
+                  await ref
+                      .read(tripRepositoryProvider)
+                      .assignDriver(trip.id, driverUser);
+
+                  if (context.mounted) {
+                    context.push('/active-trip', extra: trip);
+                  }
                 },
                 style: FilledButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 12.h),
