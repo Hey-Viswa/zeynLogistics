@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
 
 class RequesterHomeScreen extends ConsumerWidget {
@@ -20,27 +21,39 @@ class RequesterHomeScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Hello,\nRequester',
-                style: Theme.of(context).textTheme.headlineMedium,
+              Expanded(
+                child: Text(
+                  'Hello,\nRequester',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.headlineMedium?.copyWith(fontSize: 28.sp),
+                ),
               ),
               IconButton(
                 onPressed: () => context.push('/profile'),
-                icon: const CircleAvatar(child: Icon(Icons.person)),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: CircleAvatar(
+                  child: Icon(Icons.person, size: 24.sp),
+                  radius: 20.r,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24.h),
           if (activeTrips.isEmpty)
             _buildEmptyState(context)
           else
             ...activeTrips.map((trip) => _buildTripCard(context, trip)),
 
-          const SizedBox(height: 24),
+          SizedBox(height: 24.h),
           FilledButton.icon(
             onPressed: () => context.push('/book-ride'),
-            icon: const Icon(Icons.add),
-            label: const Text('Book a Ride'),
+            icon: Icon(Icons.add, size: 20.sp),
+            label: Text('Book a Ride', style: TextStyle(fontSize: 16.sp)),
+            style: FilledButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+            ),
           ),
         ],
       ),
@@ -51,19 +64,20 @@ class RequesterHomeScreen extends ConsumerWidget {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: EdgeInsets.all(32.w),
         child: Column(
           children: [
             Icon(
               Icons.inbox_outlined,
-              size: 48,
+              size: 48.sp,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               'No active trips yet',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 16.sp,
               ),
             ),
           ],
@@ -76,9 +90,9 @@ class RequesterHomeScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.push('/trip-status/${trip.id}'),
       child: Card(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: EdgeInsets.only(bottom: 16.h),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -89,25 +103,30 @@ class RequesterHomeScreen extends ConsumerWidget {
                     'Trip #${trip.id.substring(0, 4)}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
+                      fontSize: 16.sp,
                     ),
                   ),
                   _buildStatusChip(context, trip.status),
                 ],
               ),
-              const Divider(height: 24),
+              Divider(height: 24.h),
               Row(
                 children: [
-                  const Icon(Icons.my_location, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(trip.pickup)),
+                  Icon(Icons.my_location, size: 16.sp, color: Colors.grey),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(trip.pickup, style: TextStyle(fontSize: 14.sp)),
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Row(
                 children: [
-                  const Icon(Icons.location_on, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(trip.drop)),
+                  Icon(Icons.location_on, size: 16.sp, color: Colors.grey),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(trip.drop, style: TextStyle(fontSize: 14.sp)),
+                  ),
                 ],
               ),
             ],
@@ -141,17 +160,17 @@ class RequesterHomeScreen extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: color),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 12,
+          fontSize: 12.sp,
           fontWeight: FontWeight.bold,
         ),
       ),

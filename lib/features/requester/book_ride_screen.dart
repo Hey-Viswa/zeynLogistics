@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
 
 class BookRideScreen extends ConsumerStatefulWidget {
@@ -55,23 +56,24 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: const Text('Book a Ride')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Your Route',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 24.sp,
+              ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             // Connected Inputs
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(24.r),
               ),
               child: Column(
                 children: [
@@ -83,17 +85,18 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                           Icon(
                             Icons.my_location,
                             color: Theme.of(context).colorScheme.primary,
+                            size: 24.sp,
                           ),
                           Container(
-                            height: 40,
-                            width: 2,
+                            height: 40.h,
+                            width: 2.w,
                             color: Theme.of(
                               context,
                             ).colorScheme.outlineVariant.withOpacity(0.5),
                           ),
                         ],
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: _buildRouteField(
                           controller: _pickupController,
@@ -106,8 +109,12 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                   // Drop Input
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.redAccent),
-                      const SizedBox(width: 16),
+                      Icon(
+                        Icons.location_on,
+                        color: Colors.redAccent,
+                        size: 24.sp,
+                      ),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: _buildRouteField(
                           controller: _dropController,
@@ -120,9 +127,14 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            Text('Date & Time', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            SizedBox(height: 24.h),
+            Text(
+              'Date & Time',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
+            ),
+            SizedBox(height: 8.h),
             InkWell(
               onTap: () async {
                 final date = await showDatePicker(
@@ -136,51 +148,54 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                 }
               },
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: Theme.of(context).colorScheme.outline,
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today),
-                    const SizedBox(width: 16),
+                    Icon(Icons.calendar_today, size: 20.sp),
+                    SizedBox(width: 16.w),
                     Text(
                       '${_selectedDate.year}-${_selectedDate.month}-${_selectedDate.day}',
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(fontSize: 16.sp),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             _buildTextField(
               controller: _notesController,
               label: 'Notes (Optional)',
               icon: Icons.note_alt_outlined,
               maxLines: 3,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             Text(
               'Choose your ride',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _vehicleOptions.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              separatorBuilder: (context, index) => SizedBox(height: 12.h),
               itemBuilder: (context, index) {
                 final option = _vehicleOptions[index];
                 final isSelected = _selectedVehicle == option.name;
                 return _buildVehicleOption(context, option, isSelected);
               },
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32.h),
             FilledButton(
               onPressed: () {
                 if (_pickupController.text.isEmpty ||
@@ -213,14 +228,14 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
               style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                padding: const EdgeInsets.all(18),
+                padding: EdgeInsets.all(18.w),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Confirm Request',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -240,12 +255,12 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
         setState(() => _selectedVehicle = option.name);
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
               : Theme.of(context).colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary
@@ -265,19 +280,19 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
           children: [
             // Vehicle Icon (Mocking the 3D look with icons + background)
             Container(
-              width: 60,
-              height: 60,
+              width: 60.w,
+              height: 60.w,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
                 option.icon,
-                size: 32,
+                size: 32.sp,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16.w),
             // Details
             Expanded(
               child: Column(
@@ -286,37 +301,37 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
                   Text(
                     option.name,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h),
                   Row(
                     children: [
                       Text(
                         option.eta,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 12.sp,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8.w),
                       Icon(
                         Icons.circle,
-                        size: 4,
+                        size: 4.sp,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8.w),
                       Icon(
                         Icons.person,
-                        size: 12,
+                        size: 12.sp,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       Text(
                         ' ${option.capacity}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 12.sp,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -342,16 +357,17 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        prefixIcon: Icon(icon, size: 20.sp),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
         filled: true,
         fillColor: Theme.of(context).colorScheme.surfaceContainer,
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       ),
     );
   }
@@ -364,7 +380,7 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: isPickup
             ? Border.all(
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
@@ -374,12 +390,13 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
       ),
       child: TextField(
         controller: controller,
+        style: TextStyle(fontSize: 14.sp),
         decoration: InputDecoration(
           hintText: hint,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 14.h,
           ),
           filled: false,
         ),

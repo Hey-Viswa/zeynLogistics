@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
@@ -45,20 +46,27 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildHeader(context),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 if (activeTrip != null) ...[
                   _buildActiveTripAlert(context, activeTrip),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                 ],
                 Text(
                   'Available Requests',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontSize: 20.sp),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 if (availableTrips.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 40),
-                    child: Center(child: Text('No new requests nearby.')),
+                  Padding(
+                    padding: EdgeInsets.only(top: 40.h),
+                    child: Center(
+                      child: Text(
+                        'No new requests nearby.',
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
+                    ),
                   )
                 else
                   ...availableTrips.map(
@@ -80,22 +88,36 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Good Morning,', style: Theme.of(context).textTheme.bodyLarge),
-            Text('Driver', style: Theme.of(context).textTheme.headlineMedium),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Good Morning,',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontSize: 16.sp),
+              ),
+              Text(
+                'Driver',
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(fontSize: 28.sp),
+              ),
+            ],
+          ),
         ),
         Row(
           children: [
             _buildOnlineToggle(context),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             IconButton(
               onPressed: () => context.push('/profile'),
-              icon: const CircleAvatar(
-                radius: 18,
-                child: Icon(Icons.person, size: 20),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              icon: CircleAvatar(
+                radius: 18.r,
+                child: Icon(Icons.person, size: 20.sp),
               ),
             ),
           ],
@@ -112,14 +134,14 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           _isOnline = !_isOnline;
         });
       },
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(30.r),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: _isOnline
               ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2)
               : Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(30.r),
           border: Border.all(
             color: _isOnline
                 ? Theme.of(context).colorScheme.primary
@@ -130,16 +152,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           children: [
             Icon(
               Icons.power_settings_new,
-              size: 20,
+              size: 20.sp,
               color: _isOnline
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.outline,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Text(
               _isOnline ? 'ONLINE' : 'OFFLINE',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: 14.sp,
                 color: _isOnline
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.outline,
@@ -159,19 +182,22 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           children: [
             Icon(
               Icons.local_shipping_outlined,
-              size: 64,
+              size: 64.sp,
               color: Theme.of(context).colorScheme.outline,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               'You are offline',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontSize: 22.sp),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               'Go online to receive trip requests',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 14.sp,
               ),
             ),
           ],
@@ -183,12 +209,15 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   Widget _buildActiveTripAlert(BuildContext context, Trip trip) {
     return Card(
       color: Theme.of(context).colorScheme.tertiaryContainer,
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: EdgeInsets.only(bottom: 24.h),
       child: ListTile(
-        leading: const Icon(Icons.navigation),
-        title: const Text('Trip in Progress'),
-        subtitle: Text('To: ${trip.drop}'),
-        trailing: const Icon(Icons.chevron_right),
+        leading: Icon(Icons.navigation, size: 24.sp),
+        title: Text(
+          'Trip in Progress',
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text('To: ${trip.drop}', style: TextStyle(fontSize: 14.sp)),
+        trailing: Icon(Icons.chevron_right, size: 24.sp),
         onTap: () => context.push('/active-trip', extra: trip),
       ),
     );
@@ -196,25 +225,27 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   Widget _buildTripCard(BuildContext context, WidgetRef ref, Trip trip) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16.h),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Chip(
-                  label: Text(trip.vehicle),
-                  avatar: const Icon(Icons.directions_car, size: 16),
+                  label: Text(trip.vehicle, style: TextStyle(fontSize: 12.sp)),
+                  avatar: Icon(Icons.directions_car, size: 16.sp),
+                  padding: EdgeInsets.zero,
+                  labelPadding: EdgeInsets.symmetric(horizontal: 8.w),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             _buildLocationRow(Icons.my_location, trip.pickup),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             _buildLocationRow(Icons.location_on, trip.drop),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -226,7 +257,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   // Navigate to active trip
                   context.push('/active-trip', extra: trip);
                 },
-                child: const Text('Accept Trip'),
+                style: FilledButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                ),
+                child: Text('Accept Trip', style: TextStyle(fontSize: 16.sp)),
               ),
             ),
           ],
@@ -240,12 +274,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       children: [
         Icon(
           icon,
-          size: 20,
+          size: 20.sp,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8.w),
         Expanded(
-          child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 14.sp),
+          ),
         ),
       ],
     );

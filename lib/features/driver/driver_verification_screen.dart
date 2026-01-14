@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../onboarding/role_provider.dart';
 
@@ -51,51 +52,55 @@ class _DriverVerificationScreenState
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: const Text('Verify Profile')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Driver Documentation',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 24.sp,
+              ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               'Upload the following documents to verify your identity and vehicle.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 16.sp,
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32.h),
             // Progress
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.r),
               child: LinearProgressIndicator(
                 value: progress,
-                minHeight: 8,
+                minHeight: 8.h,
                 backgroundColor: Theme.of(
                   context,
                 ).colorScheme.surfaceContainerHighest,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               '$completedCount of $totalCount uploaded',
               textAlign: TextAlign.right,
-              style: Theme.of(context).textTheme.labelMedium,
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(fontSize: 12.sp),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             // Doc List
             ..._uploadedDocs.keys.map((key) {
               final isUploaded = _uploadedDocs[key]!;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: EdgeInsets.only(bottom: 16.h),
                 child: _buildDocCard(key, isUploaded),
               );
             }),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             FilledButton(
               onPressed: _isComplete
                   ? () {
@@ -105,8 +110,11 @@ class _DriverVerificationScreenState
                       context.go('/verification-pending');
                     }
                   : null, // Disabled until complete
-              style: FilledButton.styleFrom(padding: const EdgeInsets.all(18)),
-              child: const Text('Submit for Review'),
+              style: FilledButton.styleFrom(padding: EdgeInsets.all(18.w)),
+              child: Text(
+                'Submit for Review',
+                style: TextStyle(fontSize: 18.sp),
+              ),
             ),
           ],
         ),
@@ -121,15 +129,15 @@ class _DriverVerificationScreenState
           ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
           : Theme.of(context).colorScheme.surfaceContainer,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         side: isUploaded
             ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 1)
             : BorderSide.none,
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         leading: Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
             color: isUploaded
                 ? Theme.of(context).colorScheme.primary
@@ -141,17 +149,21 @@ class _DriverVerificationScreenState
             color: isUploaded
                 ? Theme.of(context).colorScheme.onPrimary
                 : Theme.of(context).colorScheme.onSurfaceVariant,
+            size: 24.sp,
           ),
         ),
         title: Text(
           title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 16.sp,
+          ),
         ),
         subtitle: Text(
           isUploaded ? 'Ready for review' : 'Tap to upload',
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontSize: 12.sp),
         ),
         trailing: isUploaded
             ? null
@@ -160,7 +172,7 @@ class _DriverVerificationScreenState
                   HapticFeedback.lightImpact();
                   _uploadDoc(title);
                 },
-                child: const Text('Upload'),
+                child: Text('Upload', style: TextStyle(fontSize: 14.sp)),
               ),
         onTap: isUploaded
             ? null

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1004444580048",
+    "project_id": "zeynlogistics",
+    "storage_bucket": "zeynlogistics.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1004444580048:android:3f0a5ba04aa1b4f56246d5",
+        "android_client_info": {
+          "package_name": "com.example.zeynlogistics"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1004444580048-j9g92mss93m342ecm4h6klii9rolqv8c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.zeynlogistics",
+            "certificate_hash": "539af4c0b19bfbe465145010eb30b8866f026276"
+          }
+        },
+        {
+          "client_id": "1004444580048-oooli3oclpo27fd8vvantp9v12h8paoq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQXhTcXfP27WEIZjY0n2l_FU4ULpddiSs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1004444580048-oooli3oclpo27fd8vvantp9v12h8paoq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

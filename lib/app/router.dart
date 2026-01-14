@@ -1,10 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/onboarding/splash_screen.dart';
 import '../features/onboarding/intro_screen.dart';
-import '../features/onboarding/otp_screen.dart';
+import '../features/onboarding/login_screen.dart';
+// import '../features/onboarding/otp_screen.dart';
 import '../features/onboarding/welcome_screen.dart';
-import '../features/onboarding/phone_screen.dart';
+// import '../features/onboarding/phone_screen.dart';
 
 import '../features/home/home_screen.dart';
 import '../features/requester/book_ride_screen.dart';
@@ -21,53 +23,83 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => _buildPage(const SplashScreen()),
       ),
-      GoRoute(path: '/intro', builder: (context, state) => const IntroScreen()),
-      GoRoute(path: '/phone', builder: (context, state) => const PhoneScreen()),
       GoRoute(
-        path: '/otp',
-        builder: (context, state) {
-          final phone = state.extra as String? ?? '';
-          return OtpScreen(phoneNumber: phone);
-        },
+        path: '/intro',
+        pageBuilder: (context, state) => _buildPage(const IntroScreen()),
       ),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) => _buildPage(const LoginScreen()),
+      ),
+      // GoRoute(
+      //   path: '/otp',
+      //   pageBuilder: (context, state) {
+      //     final phone = state.extra as String? ?? '';
+      //     return _buildPage(OtpScreen(phoneNumber: phone));
+      //   },
+      // ),
       GoRoute(
         path: '/welcome',
-        builder: (context, state) => const WelcomeScreen(),
+        pageBuilder: (context, state) => _buildPage(const WelcomeScreen()),
       ),
-
-      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/home',
+        pageBuilder: (context, state) => _buildPage(const HomeScreen()),
+      ),
       GoRoute(
         path: '/book-ride',
-        builder: (context, state) => const BookRideScreen(),
+        pageBuilder: (context, state) => _buildPage(const BookRideScreen()),
       ),
       GoRoute(
         path: '/trip-status/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
-          return TripStatusScreen(tripId: id);
+          return _buildPage(TripStatusScreen(tripId: id));
         },
       ),
       GoRoute(
         path: '/active-trip',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final trip = state.extra as Trip;
-          return ActiveTripScreen(trip: trip);
+          return _buildPage(ActiveTripScreen(trip: trip));
         },
       ),
       GoRoute(
         path: '/driver-verification',
-        builder: (context, state) => const DriverVerificationScreen(),
+        pageBuilder: (context, state) =>
+            _buildPage(const DriverVerificationScreen()),
       ),
       GoRoute(
         path: '/verification-pending',
-        builder: (context, state) => const VerificationPendingScreen(),
+        pageBuilder: (context, state) =>
+            _buildPage(const VerificationPendingScreen()),
       ),
       GoRoute(
         path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
+        pageBuilder: (context, state) => _buildPage(const ProfileScreen()),
       ),
     ],
   );
 });
+
+CustomTransitionPage _buildPage(Widget child) {
+  return CustomTransitionPage(
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const begin = Offset(1.0, 0.0); // Slide from right
+      const end = Offset.zero;
+      const curve = Curves.easeOutCubic; // Smooth expressive curve
+
+      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      var offsetAnimation = animation.drive(tween);
+
+      return SlideTransition(
+        position: offsetAnimation,
+        child: FadeTransition(opacity: animation, child: child),
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 300),
+  );
+}

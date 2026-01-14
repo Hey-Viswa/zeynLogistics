@@ -3,18 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/role_provider.dart';
+import '../../shared/theme/theme_provider.dart';
+import '../../shared/services/auth_service.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    // Sign out from Firebase
+    await ref.read(authServiceProvider).signOut();
+
+    // Clear local prefs
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Clear all data
+    await prefs.clear();
 
-    // Reset providers if necessary (riverpod auto-dispose handles most)
-
+    // Navigate to Intro/Splas
     if (context.mounted) {
-      context.go('/'); // Back to splash/intro
+      context.go('/intro');
     }
   }
 
@@ -144,12 +149,44 @@ class ProfileScreen extends ConsumerWidget {
             _buildListTile(
               context,
               icon: Icons.dark_mode,
-              title: 'Dark Mode',
-              subtitle: 'System Default',
+              title: 'App Theme',
+              subtitle: ref.watch(themeProvider).name.toUpperCase(),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Manage via System Settings')),
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) => Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Select Theme',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildThemeOption(
+                          context,
+                          ref,
+                          'System Default',
+                          ThemeMode.system,
+                        ),
+                        _buildThemeOption(
+                          context,
+                          ref,
+                          'Light Mode',
+                          ThemeMode.light,
+                        ),
+                        _buildThemeOption(
+                          context,
+                          ref,
+                          'Dark Mode',
+                          ThemeMode.dark,
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
@@ -231,6 +268,25 @@ class ProfileScreen extends ConsumerWidget {
       trailing: trailing,
       onTap: onTap,
       contentPadding: EdgeInsets.zero,
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    ThemeMode mode,
+  ) {
+    final currentMode = ref.watch(themeProvider);
+    return ListTile(
+      title: Text(title),
+      trailing: currentMode == mode
+          ? const Icon(Icons.check, color: Colors.green)
+          : null,
+      onTap: () {
+        ref.read(themeProvider.notifier).setTheme(mode);
+        context.pop();
+      },
     );
   }
 }

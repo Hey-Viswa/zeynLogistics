@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
 import '../../shared/widgets/map_placeholder.dart';
 
@@ -38,7 +39,7 @@ class TripStatusScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Trip Status'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, size: 24.sp),
           onPressed: () => context.pop(),
         ),
       ),
@@ -46,21 +47,19 @@ class TripStatusScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(24.0),
+            Padding(
+              padding: EdgeInsets.all(24.w),
               child: MapPlaceholder(
                 label: 'Tracking route (coming soon)',
                 icon: Icons.navigation_outlined,
-                height: 220,
+                height: 220.h,
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
                 boxShadow: [
                   BoxShadow(
                     color: Theme.of(context).shadowColor.withOpacity(0.05),
@@ -73,13 +72,13 @@ class TripStatusScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildStatusHeader(context, trip),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                   if (trip.driverId != null) ...[
                     _buildDriverInfo(context),
-                    const Divider(height: 32),
+                    Divider(height: 32.h),
                   ],
                   _buildLocationInfo(context, trip),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                   if (trip.status == TripStatus.waiting)
                     OutlinedButton(
                       onPressed: () {
@@ -95,9 +94,15 @@ class TripStatusScreen extends ConsumerWidget {
                         side: BorderSide(
                           color: Theme.of(context).colorScheme.error,
                         ),
-                        minimumSize: const Size.fromHeight(48),
+                        minimumSize: Size.fromHeight(48.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
                       ),
-                      child: const Text('Cancel Request'),
+                      child: Text(
+                        'Cancel Request',
+                        style: TextStyle(fontSize: 16.sp),
+                      ),
                     ),
                 ],
               ),
@@ -144,28 +149,30 @@ class TripStatusScreen extends ConsumerWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: color, size: 28),
+          child: Icon(icon, color: color, size: 28.sp),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 statusTitle,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.sp,
+                ),
               ),
               Text(
                 statusSubtitle,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 14.sp,
                 ),
               ),
             ],
@@ -178,31 +185,41 @@ class TripStatusScreen extends ConsumerWidget {
   Widget _buildDriverInfo(BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(radius: 24, child: Icon(Icons.person)),
-        const SizedBox(width: 16),
+        CircleAvatar(
+          radius: 24.r,
+          child: Icon(Icons.person, size: 28.sp),
+        ),
+        SizedBox(width: 16.w),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'John Doe',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+              ),
             ),
             Row(
               children: [
                 Icon(
                   Icons.star,
-                  size: 16,
+                  size: 16.sp,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 4),
-                Text('4.8', style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(width: 8),
+                SizedBox(width: 4.w),
+                Text(
+                  '4.8',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontSize: 14.sp),
+                ),
+                SizedBox(width: 8.w),
                 Text(
                   '• Toyota Van (XYZ-123)',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 14.sp,
                   ),
                 ),
               ],
@@ -212,7 +229,7 @@ class TripStatusScreen extends ConsumerWidget {
         const Spacer(),
         IconButton(
           onPressed: () {},
-          icon: const Icon(Icons.phone),
+          icon: Icon(Icons.phone, size: 24.sp),
           style: IconButton.styleFrom(
             backgroundColor: Theme.of(
               context,
@@ -227,7 +244,7 @@ class TripStatusScreen extends ConsumerWidget {
     return Column(
       children: [
         _buildLocationRow(context, Icons.my_location, 'Pickup', trip.pickup),
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         _buildLocationRow(context, Icons.location_on, 'Drop-off', trip.drop),
       ],
     );
@@ -244,10 +261,10 @@ class TripStatusScreen extends ConsumerWidget {
       children: [
         Icon(
           icon,
-          size: 20,
+          size: 20.sp,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,10 +273,16 @@ class TripStatusScreen extends ConsumerWidget {
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12.sp,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(value, style: Theme.of(context).textTheme.bodyLarge),
+              SizedBox(height: 4.h),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontSize: 16.sp),
+              ),
             ],
           ),
         ),

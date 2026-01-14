@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../shared/services/auth_service.dart';
+import '../../shared/services/user_repository.dart';
 import 'role_provider.dart';
 
 class WelcomeScreen extends ConsumerWidget {
@@ -21,6 +23,16 @@ class WelcomeScreen extends ConsumerWidget {
 
     // Update role
     await ref.read(roleProvider.notifier).setRole(role);
+
+    // Persist to Backend
+    // Start persistence in background or await it?
+    // Ideally await to ensure it sticks.
+    final user = ref.read(authServiceProvider).currentUser;
+    if (user != null) {
+      await ref.read(userRepositoryProvider).updateUser(user.uid, {
+        'role': role == UserRole.driver ? 'driver' : 'requester',
+      });
+    }
 
     // Navigate
     if (context.mounted) {

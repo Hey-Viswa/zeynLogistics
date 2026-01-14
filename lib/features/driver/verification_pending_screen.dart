@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../onboarding/role_provider.dart';
 
 class VerificationPendingScreen extends ConsumerWidget {
@@ -12,14 +13,14 @@ class VerificationPendingScreen extends ConsumerWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: EdgeInsets.all(32.w),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
               Container(
-                padding: const EdgeInsets.all(32),
+                padding: EdgeInsets.all(32.w),
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
@@ -28,24 +29,26 @@ class VerificationPendingScreen extends ConsumerWidget {
                 ),
                 child: Icon(
                   Icons.hourglass_top,
-                  size: 80,
+                  size: 80.sp,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32.h),
               Text(
                 'Application Under Review',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: 28.sp,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               Text(
                 'We have received your documents. Our team typically completes verification within 24 hours.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 16.sp,
                 ),
               ),
               const Spacer(),
@@ -70,19 +73,17 @@ class VerificationPendingScreen extends ConsumerWidget {
                     context.go('/home');
                   }
                 },
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.all(18),
-                ),
-                child: const Text('Check Status'),
+                style: FilledButton.styleFrom(padding: EdgeInsets.all(18.w)),
+                child: Text('Check Status', style: TextStyle(fontSize: 18.sp)),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               TextButton(
                 onPressed: () {
                   // Allow going back to correct docs if needed?
                   // Or Logout?
                   context.go('/welcome'); // Temporary exit
                 },
-                child: const Text('Back to Home'),
+                child: Text('Back to Home', style: TextStyle(fontSize: 16.sp)),
               ),
             ],
           ),

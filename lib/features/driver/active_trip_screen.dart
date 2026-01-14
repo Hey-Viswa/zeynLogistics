@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/data/trip_provider.dart';
 import '../../shared/widgets/map_placeholder.dart';
 
@@ -20,22 +21,23 @@ class ActiveTripScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Current Trip'),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close, size: 24.sp),
           onPressed: () => context.pop(),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const MapPlaceholder(
+            MapPlaceholder(
               label: 'Navigation will appear here',
               icon: Icons.navigation,
+              height: 200.h,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             _buildStatusCard(context, currentTrip),
-            const SizedBox(height: 32),
+            SizedBox(height: 32.h),
             _buildLocationSteppers(context, currentTrip),
             const Spacer(),
             if (currentTrip.status == TripStatus.accepted)
@@ -43,10 +45,10 @@ class ActiveTripScreen extends ConsumerWidget {
                 onPressed: () {
                   ref.read(tripProvider.notifier).startRide(trip.id);
                 },
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Start Trip'),
+                icon: Icon(Icons.play_arrow, size: 20.sp),
+                label: Text('Start Trip', style: TextStyle(fontSize: 16.sp)),
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
+                  minimumSize: Size.fromHeight(56.h),
                 ),
               )
             else if (currentTrip.status == TripStatus.onWay)
@@ -55,12 +57,12 @@ class ActiveTripScreen extends ConsumerWidget {
                   ref.read(tripProvider.notifier).completeRide(trip.id);
                   context.pop(); // Go back to home
                 },
-                icon: const Icon(Icons.check),
-                label: const Text('Complete Trip'),
+                icon: Icon(Icons.check, size: 20.sp),
+                label: Text('Complete Trip', style: TextStyle(fontSize: 16.sp)),
                 style: FilledButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  minimumSize: const Size.fromHeight(56),
+                  minimumSize: Size.fromHeight(56.h),
                 ),
               ),
           ],
@@ -90,7 +92,7 @@ class ActiveTripScreen extends ConsumerWidget {
     return Card(
       color: statusColor,
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           children: [
             Text(
@@ -98,13 +100,15 @@ class ActiveTripScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
+                fontSize: 24.sp,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               'Est. arrival in 15 mins',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
+                fontSize: 16.sp,
               ),
             ),
           ],
@@ -124,15 +128,16 @@ class ActiveTripScreen extends ConsumerWidget {
                 Icon(
                   Icons.my_location,
                   color: Theme.of(context).colorScheme.primary,
+                  size: 20.sp,
                 ),
                 Container(
-                  height: 40,
-                  width: 2,
+                  height: 40.h,
+                  width: 2.w,
                   color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
                 ),
               ],
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,12 +146,15 @@ class ActiveTripScreen extends ConsumerWidget {
                     'Pickup',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 14.sp,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h),
                   Text(
                     trip.pickup,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(fontSize: 18.sp),
                   ),
                 ],
               ),
@@ -156,8 +164,12 @@ class ActiveTripScreen extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.location_on, color: Theme.of(context).colorScheme.error),
-            const SizedBox(width: 16),
+            Icon(
+              Icons.location_on,
+              color: Theme.of(context).colorScheme.error,
+              size: 20.sp,
+            ),
+            SizedBox(width: 16.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,12 +178,15 @@ class ActiveTripScreen extends ConsumerWidget {
                     'Drop-off',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 14.sp,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h),
                   Text(
                     trip.drop,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(fontSize: 18.sp),
                   ),
                 ],
               ),
