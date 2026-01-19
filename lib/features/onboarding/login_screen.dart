@@ -3,12 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../shared/theme/theme_provider.dart'; // Ensure these imports exist or adjust
 import '../../shared/services/auth_service.dart';
 import '../../shared/services/user_repository.dart';
 import '../../shared/data/user_model.dart';
-// import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Use if available, else generic icon
+import 'role_provider.dart';
+import 'package:flutter/services.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -19,8 +18,11 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
+  bool _isManagerLogin =
+      false; // Track if user authenticated as manager via passcode
 
   Future<void> _handleGoogleSignIn() async {
+    HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
     try {
       final authService = ref.read(authServiceProvider);
@@ -31,32 +33,96 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
         // Check if user exists in Firestore
         final userRepo = ref.read(userRepositoryProvider);
-        final exists = await userRepo.userExists(user.uid);
+        final userData = await userRepo.getUser(user.uid);
 
-        if (!exists) {
+        if (userData == null) {
           // Create new user profile
+          final role = _isManagerLogin
+              ? 'manager'
+              : null; // Set manager if authorized
           final newUser = UserModel(
             id: user.uid,
-            phoneNumber: user.phoneNumber ?? '', // Might be null with Google
+            phoneNumber: user.phoneNumber ?? '',
             email: user.email,
             name: user.displayName,
             photoUrl: user.photoURL,
+            role: role,
             createdAt: DateTime.now(),
           );
           await userRepo.createUser(newUser);
 
-          if (mounted) context.go('/welcome'); // Role Selection
+          if (mounted) {
+            if (_isManagerLogin) {
+              context.go('/manager-home');
+            } else {
+              context.go('/welcome');
+            }
+          }
         } else {
-          // Existing user - Check role to route properly
-          final userData = await userRepo.getUser(user.uid);
-          if (userData?.role != null) {
-            if (mounted) context.go('/home');
+          // Existing user - Sync local state with Firestore data
+          // If manager login was authorized locally, force upgrade the role in Firestore
+          if (_isManagerLogin && userData.role != 'manager') {
+            await userRepo.updateUser(user.uid, {'role': 'manager'});
+            // Re-fetch or manually construct updated model?
+            // Simplest: just proceed as manager
+            await ref.read(roleProvider.notifier).setRole(UserRole.manager);
+            if (mounted) context.go('/manager-home');
+            return;
+          }
+
+          if (userData.role != null) {
+            UserRole role;
+            if (userData.role == 'driver') {
+              role = UserRole.driver;
+            } else if (userData.role == 'requester') {
+              role = UserRole.requester;
+            } else if (userData.role == 'manager') {
+              role = UserRole.manager;
+            } else {
+              role = UserRole.none;
+            }
+
+            // Update RoleProvider
+            await ref.read(roleProvider.notifier).setRole(role);
+
+            // Redirect Manager
+            if (role == UserRole.manager) {
+              if (mounted) context.go('/manager-home');
+              return;
+            }
+
+            // Update VerificationProvider (for drivers)
+            if (role == UserRole.driver) {
+              VerificationStatus vStatus = VerificationStatus.none;
+              if (userData.isVerified) {
+                vStatus = VerificationStatus.verified;
+              } else if (userData.documents.isNotEmpty) {
+                vStatus = VerificationStatus.pending;
+              }
+              await ref.read(verificationProvider.notifier).setStatus(vStatus);
+
+              // Route based on verification status
+              if (mounted) {
+                if (vStatus == VerificationStatus.verified) {
+                  context.go('/home');
+                } else if (vStatus == VerificationStatus.pending) {
+                  context.go('/verification-pending');
+                } else {
+                  context.go('/driver-verification');
+                }
+              }
+            } else {
+              // Requester
+              if (mounted) context.go('/home');
+            }
           } else {
+            // User exists but no role set (rare edge case)
             if (mounted) context.go('/welcome');
           }
         }
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('Login Error: $e\n$stack');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -68,6 +134,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showManagerPasscodeDialog() {
+    final passController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Manager Access'),
+        content: TextField(
+          controller: passController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            hintText: 'Enter Admin Passcode',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (passController.text == 'admin123') {
+                // Simple hardcoded check
+                Navigator.pop(context);
+                setState(() => _isManagerLogin = true);
+                _handleGoogleSignIn(); // Proceed to auth
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Invalid Passcode')),
+                );
+              }
+            },
+            child: const Text('Enter'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -171,6 +276,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
 
+              SizedBox(height: 16.h),
+              TextButton(
+                onPressed: _showManagerPasscodeDialog,
+                child: Text(
+                  'Manager Login',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.outline,
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
               SizedBox(height: 24.h),
             ],
           ),

@@ -16,11 +16,21 @@ class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: role == UserRole.requester
-              ? const RequesterHomeScreen()
-              : const DriverHomeScreen(),
+          child: _buildBody(role),
         ),
       ),
     );
+  }
+
+  Widget _buildBody(UserRole role) {
+    switch (role) {
+      case UserRole.requester:
+        return const RequesterHomeScreen();
+      case UserRole.driver:
+        return const DriverHomeScreen();
+      case UserRole.none:
+      default:
+        return const Center(child: CircularProgressIndicator());
+    }
   }
 }

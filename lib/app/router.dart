@@ -6,6 +6,7 @@ import '../features/onboarding/intro_screen.dart';
 import '../features/onboarding/login_screen.dart';
 // import '../features/onboarding/otp_screen.dart';
 import '../features/onboarding/welcome_screen.dart';
+import '../features/onboarding/role_selection_screen.dart';
 // import '../features/onboarding/phone_screen.dart';
 
 import '../features/home/home_screen.dart';
@@ -18,8 +19,10 @@ import '../features/driver/verification_pending_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/profile/edit_profile_screen.dart';
 import '../features/profile/saved_places_screen.dart';
-import '../features/profile/payment_methods_screen.dart';
 import '../shared/data/user_model.dart';
+import '../features/manager/manager_home_screen.dart';
+import '../features/manager/driver_detail_screen.dart';
+import '../features/chat/chat_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -47,6 +50,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/welcome',
         pageBuilder: (context, state) => _buildPage(const WelcomeScreen()),
+      ),
+      GoRoute(
+        path: '/role-selection',
+        pageBuilder: (context, state) =>
+            _buildPage(const RoleSelectionScreen()),
       ),
       GoRoute(
         path: '/home',
@@ -99,10 +107,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/payment-methods',
+        path: '/manager-home',
+        pageBuilder: (context, state) => _buildPage(const ManagerHomeScreen()),
+      ),
+      GoRoute(
+        path: '/driver-detail/:id',
         pageBuilder: (context, state) {
-          final user = state.extra as UserModel;
-          return _buildPage(PaymentMethodsScreen(user: user));
+          final driver = state.extra as UserModel;
+          // In a real app we might fetch by ID if extra is null,
+          // but for now we rely on passing the object.
+          return _buildPage(DriverDetailScreen(driver: driver));
+        },
+      ),
+      GoRoute(
+        path: '/chat/:id',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildPage(ChatScreen(chatId: id));
         },
       ),
     ],
@@ -113,18 +134,19 @@ CustomTransitionPage _buildPage(Widget child) {
   return CustomTransitionPage(
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      const begin = Offset(1.0, 0.0); // Slide from right
+      const begin = Offset(0.05, 0.0); // Subtle slide
       const end = Offset.zero;
-      const curve = Curves.easeOutCubic; // Smooth expressive curve
+      const curve = Curves.easeInOutCubicEmphasized;
 
       var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
       var offsetAnimation = animation.drive(tween);
+      var fadeAnimation = CurvedAnimation(parent: animation, curve: curve);
 
       return SlideTransition(
         position: offsetAnimation,
-        child: FadeTransition(opacity: animation, child: child),
+        child: FadeTransition(opacity: fadeAnimation, child: child),
       );
     },
-    transitionDuration: const Duration(milliseconds: 300),
+    transitionDuration: const Duration(milliseconds: 400),
   );
 }

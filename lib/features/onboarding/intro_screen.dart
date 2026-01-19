@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 
 class IntroScreen extends StatelessWidget {
   const IntroScreen({super.key});
@@ -80,7 +81,10 @@ class IntroScreen extends StatelessWidget {
                     const Spacer(),
 
                     FilledButton(
-                          onPressed: () => context.push('/login'),
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            context.push('/login');
+                          },
                           style: FilledButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 18.h),
                           ),

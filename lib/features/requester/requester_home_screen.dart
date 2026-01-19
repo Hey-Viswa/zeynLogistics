@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../shared/data/trip_provider.dart';
 import '../../shared/services/trip_repository.dart';
 import '../../shared/services/auth_service.dart';
 import '../../shared/services/user_repository.dart';
+import '../../shared/widgets/scale_button.dart';
 
 final userTripsProvider = StreamProvider<List<Trip>>((ref) {
   final user = ref.watch(authStateProvider).value;
@@ -71,20 +74,70 @@ class RequesterHomeScreen extends ConsumerWidget {
               return Column(
                 children: activeTrips
                     .map((trip) => _buildTripCard(context, trip))
-                    .toList(),
+                    .toList()
+                    .animate(interval: 100.ms)
+                    .fade(duration: 400.ms)
+                    .slideY(begin: 0.1, curve: Curves.easeOutQuad),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(child: Text('Error: $err')),
+            error: (err, stack) {
+              if (err.toString().contains('failed-precondition')) {
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Text(
+                      'Setting up database indexes...\nPlease wait a moment or restart the app.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 14.sp),
+                    ),
+                  ),
+                );
+              }
+              return Center(child: Text('Something went wrong'));
+            },
           ),
 
           SizedBox(height: 24.h),
-          FilledButton.icon(
-            onPressed: () => context.push('/book-ride'),
-            icon: Icon(Icons.add, size: 20.sp),
-            label: Text('Book a Ride', style: TextStyle(fontSize: 16.sp)),
-            style: FilledButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 12.h),
+          ScaleButton(
+            onTap: () {
+              // Haptic is handled by ScaleButton, but for GoRouter push we might want to ensure it triggers
+              context.push('/book-ride');
+            },
+            child: Container(
+              height: 56.h,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(100.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add,
+                    size: 20.sp,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'Book a Ride',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -95,6 +148,8 @@ class RequesterHomeScreen extends ConsumerWidget {
   Widget _buildEmptyState(BuildContext context) {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
       child: Padding(
         padding: EdgeInsets.all(32.w),
         child: Column(
@@ -119,10 +174,15 @@ class RequesterHomeScreen extends ConsumerWidget {
   }
 
   Widget _buildTripCard(BuildContext context, Trip trip) {
-    return GestureDetector(
+    return ScaleButton(
       onTap: () => context.push('/trip-status/${trip.id}'),
       child: Card(
         margin: EdgeInsets.only(bottom: 16.h),
+        elevation: 2,
+        shadowColor: Colors.black12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
         child: Padding(
           padding: EdgeInsets.all(16.w),
           child: Column(
@@ -131,11 +191,18 @@ class RequesterHomeScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Trip #${trip.id.substring(0, 4)}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.sp,
+                  Hero(
+                    tag: 'trip_title_${trip.id}',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Text(
+                        'Trip #${trip.id.substring(0, 4)}',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.sp,
+                            ),
+                      ),
                     ),
                   ),
                   _buildStatusChip(context, trip.status),

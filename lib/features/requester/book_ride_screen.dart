@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 import '../../shared/data/trip_provider.dart';
 import '../../shared/services/trip_repository.dart';
 import '../../shared/services/auth_service.dart';
 import '../../shared/services/user_repository.dart';
+import '../../shared/data/user_model.dart';
+import '../../shared/widgets/scale_button.dart';
 
 class BookRideScreen extends ConsumerStatefulWidget {
   const BookRideScreen({super.key});
@@ -57,317 +60,332 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // We need the current user to get their ID/Name/Phone
     final user = ref
         .watch(
           userStreamProvider(ref.watch(authStateProvider).value?.uid ?? ''),
         )
         .value;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(title: const Text('Book a Ride')),
+      backgroundColor: colorScheme.surface,
+      resizeToAvoidBottomInset: true,
+      appBar: AppBar(
+        title: Text(
+          'Book a Ride',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: ScaleButton(
+          onTap: () => context.pop(),
+          child: const Icon(Icons.close), // Simplified close icon
+        ),
+      ),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Your Route',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.sp,
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
-                  Container(
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(24.r),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Column(
-                              children: [
-                                Icon(
-                                  Icons.my_location,
-                                  color: Theme.of(context).colorScheme.primary,
-                                  size: 24.sp,
-                                ),
-                                Container(
-                                  height: 40.h,
-                                  width: 2.w,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.outlineVariant.withOpacity(0.5),
-                                ),
-                              ],
-                            ),
-                            SizedBox(width: 16.w),
-                            Expanded(
-                              child: _buildRouteField(
-                                controller: _pickupController,
-                                hint: 'Pickup Location',
-                                isPickup: true,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              color: Colors.redAccent,
-                              size: 24.sp,
-                            ),
-                            SizedBox(width: 16.w),
-                            Expanded(
-                              child: _buildRouteField(
-                                controller: _dropController,
-                                hint: 'Where to?',
-                                isPickup: false,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
-                  Text(
-                    'Date & Time',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
-                  ),
-                  SizedBox(height: 8.h),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 30)),
-                      );
-                      if (date != null) {
-                        setState(() => _selectedDate = date);
-                      }
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(16.w),
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: 16.h),
+
+                    // 1. Trip Card (Simplified M3 Container)
+                    Container(
                       decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                        borderRadius: BorderRadius.circular(12.r),
+                        color: colorScheme
+                            .surfaceContainerLow, // M3 Container Color
+                        borderRadius: BorderRadius.circular(20.r),
+                        // No BoxShadow for simple M3 look
                       ),
-                      child: Row(
+                      padding: EdgeInsets.all(20.w),
+                      child: Column(
                         children: [
-                          Icon(Icons.calendar_today, size: 20.sp),
-                          SizedBox(width: 16.w),
-                          Text(
-                            '${_selectedDate.year}-${_selectedDate.month}-${_selectedDate.day}',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyLarge?.copyWith(fontSize: 16.sp),
+                          _buildInputRow(
+                            context,
+                            controller: _pickupController,
+                            hint: 'Pickup Location',
+                            icon: Icons.my_location,
+                            iconColor: colorScheme.primary,
+                            isLast: false,
+                          ),
+                          _buildInputRow(
+                            context,
+                            controller: _dropController,
+                            hint: 'Where to?',
+                            icon: Icons.location_on,
+                            iconColor: colorScheme.error,
+                            isLast: true,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  SizedBox(height: 24.h),
-                  _buildTextField(
-                    controller: _notesController,
-                    label: 'Notes (Optional)',
-                    icon: Icons.note_alt_outlined,
-                    maxLines: 3,
-                  ),
-                  SizedBox(height: 24.h),
-                  Text(
-                    'Choose your ride',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(fontSize: 18.sp),
-                  ),
-                  SizedBox(height: 16.h),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _vehicleOptions.length,
-                    separatorBuilder: (context, index) =>
-                        SizedBox(height: 12.h),
-                    itemBuilder: (context, index) {
-                      final option = _vehicleOptions[index];
-                      final isSelected = _selectedVehicle == option.name;
-                      return _buildVehicleOption(context, option, isSelected);
-                    },
-                  ),
-                  SizedBox(height: 32.h),
-                  FilledButton(
-                    onPressed: () async {
-                      if (_pickupController.text.isEmpty ||
-                          _dropController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text(
-                              'Please enter both Pickup and Drop locations',
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.error,
+
+                    SizedBox(height: 24.h), // Keeping this one
+                    // 2. Schedule
+                    Row(
+                      children: [
+                        Text(
+                          'Schedule',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
                           ),
-                        );
-                        return;
-                      }
+                        ),
+                        const Spacer(),
+                        ScaleButton(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 30),
+                              ),
+                            );
+                            if (date != null) {
+                              setState(() => _selectedDate = date);
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 8.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainer,
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 16.sp,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  DateFormat(
+                                    'EEE, MMM d',
+                                  ).format(_selectedDate),
+                                  style: TextStyle(
+                                    color: colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
 
-                      HapticFeedback.mediumImpact();
+                    SizedBox(height: 24.h),
 
-                      final selectedOption = _vehicleOptions.firstWhere(
-                        (opt) => opt.name == _selectedVehicle,
-                      );
-
-                      final newTrip = Trip(
-                        id: _uuid.v4(),
-                        requesterId: user.id,
-                        requesterName: user.name ?? 'Guest',
-                        requesterPhone: user.phoneNumber,
-                        pickup: _pickupController.text,
-                        drop: _dropController.text,
-                        vehicle: _selectedVehicle,
-                        date: _selectedDate,
-                        price: selectedOption.price.toDouble(),
-                        status: TripStatus.waiting,
-                      );
-
-                      await ref
-                          .read(tripRepositoryProvider)
-                          .createTrip(newTrip);
-
-                      if (context.mounted) {
-                        // Pass the trip object for immediate display, though stream will pick it up
-                        context.push('/trip-status', extra: newTrip);
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      padding: EdgeInsets.all(18.w),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
+                    // 3. Vehicle Selection
+                    Text(
+                      'Choose Vehicle',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    child: Text(
-                      'Confirm Request',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
+                    SizedBox(height: 12.h),
+                    SizedBox(
+                      height: 100.h,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        itemCount: _vehicleOptions.length,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(width: 12.w),
+                        itemBuilder: (context, index) {
+                          final option = _vehicleOptions[index];
+                          return _buildVehicleCard(
+                            context,
+                            option,
+                            _selectedVehicle == option.name,
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ],
+
+                    SizedBox(height: 24.h),
+
+                    // 4. Notes
+                    TextField(
+                      controller: _notesController,
+                      style: TextStyle(fontSize: 16.sp),
+                      decoration: InputDecoration(
+                        hintText: 'Add note for driver...',
+                        prefixIcon: Icon(Icons.edit_note, size: 22.sp),
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerLow,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: EdgeInsets.all(16.w),
+                      ),
+                    ),
+
+                    SizedBox(height: 32.h),
+
+                    // 5. Button (M3 FilledButton)
+                    ScaleButton(
+                      onTap: () => _handleBooking(context, user),
+                      child: Container(
+                        width: double.infinity,
+                        height: 56.h,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary, // Flat color, no gradient
+                          borderRadius: BorderRadius.circular(
+                            30.r,
+                          ), // Pill shape
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Confirm Request',
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 40.h),
+                  ],
+                ),
               ),
             ),
     );
   }
 
-  Widget _buildVehicleOption(
+  Widget _buildInputRow(
+    BuildContext context, {
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    required Color iconColor,
+    required bool isLast,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Column(
+            children: [
+              SizedBox(height: 12.h),
+              Icon(icon, color: iconColor, size: 20.sp),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2.w,
+                    margin: EdgeInsets.symmetric(vertical: 4.h),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withOpacity(0.5),
+                  ),
+                ),
+              if (!isLast) SizedBox(height: 4.h),
+            ],
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              children: [
+                TextField(
+                  controller: controller,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                  ),
+                ),
+                if (!isLast)
+                  Divider(
+                    height: 1,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withOpacity(0.3),
+                  ),
+                if (!isLast)
+                  SizedBox(height: 16.h), // Extend height for spacing
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVehicleCard(
     BuildContext context,
     VehicleOption option,
     bool isSelected,
   ) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _selectedVehicle = option.name);
-      },
-      child: Container(
-        padding: EdgeInsets.all(16.w),
+    final colorScheme = Theme.of(context).colorScheme;
+    return ScaleButton(
+      onTap: () => setState(() => _selectedVehicle = option.name),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 100.w,
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-              : Theme.of(context).colorScheme.surfaceContainerHigh,
+              ? colorScheme.secondaryContainer
+              : colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.transparent,
-            width: 2,
+            color: isSelected ? colorScheme.primary : Colors.transparent,
+            width: 1.5,
           ),
-          boxShadow: [
-            if (!isSelected)
-              BoxShadow(
-                color: Theme.of(context).shadowColor.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
+          // No shadow, flat aesthetics
         ),
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 60.w,
-              height: 60.w,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(
-                option.icon,
-                size: 32.sp,
-                color: Theme.of(context).colorScheme.onSurface,
+            Icon(
+              option.icon,
+              size: 28.sp,
+              color: isSelected
+                  ? colorScheme.onSecondaryContainer
+                  : colorScheme.onSurface,
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              option.name,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? colorScheme.onSecondaryContainer
+                    : colorScheme.onSurface,
               ),
             ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    option.name,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Row(
-                    children: [
-                      Text(
-                        option.eta,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Icon(
-                        Icons.circle,
-                        size: 4.sp,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      SizedBox(width: 8.w),
-                      Icon(
-                        Icons.person,
-                        size: 12.sp,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      Text(
-                        ' ${option.capacity}',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            SizedBox(height: 4.h),
+            Text(
+              option.eta,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -376,62 +394,42 @@ class _BookRideScreenState extends ConsumerState<BookRideScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    int maxLines = 1,
-  }) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20.sp),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainer,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+  Future<void> _handleBooking(BuildContext context, UserModel user) async {
+    if (_pickupController.text.isEmpty || _dropController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please enter locations'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-      ),
-    );
-  }
+      );
+      return;
+    }
 
-  Widget _buildRouteField({
-    required TextEditingController controller,
-    required String hint,
-    required bool isPickup,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: isPickup
-            ? Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                width: 1,
-              )
-            : null,
-      ),
-      child: TextField(
-        controller: controller,
-        style: TextStyle(fontSize: 14.sp),
-        decoration: InputDecoration(
-          hintText: hint,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 14.h,
-          ),
-          filled: false,
-        ),
-      ),
+    HapticFeedback.heavyImpact();
+
+    final selectedOption = _vehicleOptions.firstWhere(
+      (opt) => opt.name == _selectedVehicle,
     );
+
+    final newTrip = Trip(
+      id: _uuid.v4(),
+      requesterId: user.id,
+      requesterName: user.name ?? 'Guest',
+      requesterPhone: user.phoneNumber,
+      pickup: _pickupController.text,
+      drop: _dropController.text,
+      vehicle: _selectedVehicle,
+      date: _selectedDate,
+      price: selectedOption.price.toDouble(),
+      status: TripStatus.waiting,
+    );
+
+    await ref.read(tripRepositoryProvider).createTrip(newTrip);
+
+    if (context.mounted) {
+      context.push('/trip-status', extra: newTrip);
+    }
   }
 }
 

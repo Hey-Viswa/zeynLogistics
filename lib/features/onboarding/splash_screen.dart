@@ -19,8 +19,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkOnboarding() async {
-    // Artificial delay to show off animations
-    await Future.delayed(const Duration(seconds: 3));
+    // Check onboarding status immediately
+    // await Future.delayed(const Duration(seconds: 3)); // Removed for speed
     if (!mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
@@ -40,11 +40,12 @@ class _SplashScreenState extends State<SplashScreen> {
               context.go('/driver-verification');
             }
           } else {
-            // Requester or other roles go to home directly for now
+            // Requester
             context.go('/home');
           }
         } else {
-          context.go('/welcome');
+          // Logged in but no role selected -> Role Selection
+          context.go('/role-selection');
         }
       } else {
         context.go('/intro');

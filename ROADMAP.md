@@ -9,32 +9,31 @@
 - [ ] **Live Tracking**: Display polyline route from Driver to Pickup, and Pickup to Drop.
 
 ### 2. Profile & Settings
-- [ ] **Profile Screen**: Edit Name, Phone, Email.
-- [ ] **Trip History**: List of past completes trips.
-- [ ] **Settings**: Toggle Theme (Light/Dark), Notifications.
+- [x] **Profile Screen**: Edit Name, Phone, Email.
+- [x] **Trip History**: List of past completes trips.
+- [x] **Settings**: Toggle Theme (Light/Dark/Dynamic), Notifications.
+- [x] **Internal Logistics**: Removed pricing and payment methods.
 
 ---
 
 ## ⚙️ Backend Architecture (The "Real" Work)
 
 ### 1. Authentication Service
-- [ ] **Phone Auth**: Integrate Firebase Auth or Twilio for real SMS OTP.
-- [ ] **Session Management**: Secure JWT handling for "Driver" vs "Requester" sessions.
+- [x] **Phone/Google Auth**: Firebase Auth Logic Implemented.
+- [x] **Session Management**: Secure handling for "Driver" vs "Requester" sessions.
 
-### 2. Database (PostgreSQL / MongoDB)
-- [ ] **Users Table**: Store profiles, ratings, and auth IDs.
-- [ ] **Drivers Table**: Vehicle details, license status (`pending`, `verified`, `rejected`).
-- [ ] **Trips Table**: Pickup/Drop coords, fare, status, timestamps.
+### 2. Database (Firestore)
+- [x] **Users Collection**: Profiles, roles, compressed Base64 images.
+- [x] **Trips Collection**: Pickup/Drop, vehicle details, internal booking status.
 
 ### 3. Trip Logic & Matchmaking API
-- [ ] **Create Trip**: Endpoint to calculate fare and broadcast to drivers.
-- [ ] **Accept Trip**: Race condition handling (first driver gets it).
-- [ ] **Update Status**: Driver marks "Arrived", "Picked Up", "Dropped".
+- [x] **Create Trip**: Internal booking request creation.
+- [x] **Accept Trip**: Driver finding and acceptance logic.
+- [x] **Update Status**: Driver marks "On Way", "Completed".
 
-### 4. Real-time Layer (Socket.io / Firebase)
-- [ ] **Location Streaming**: Websocket channel for drivers to stream `lat,lng`.
-- [ ] **Status Updates**: Push notifications for "Driver Found", "Trip Started".
+### 4. Real-time Layer (StreamProvider)
+- [x] **Live Updates**: UI updates instantly when trips are created or modifying.
 
-### 5. Admin Panel
+### 5. Admin Panel / Verification
 - [ ] **Driver Verification**: Dashboard to view and approve/reject driver documents.
 - [ ] **Trip Monitoring**: View active trips map.

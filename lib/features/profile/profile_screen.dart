@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../onboarding/role_provider.dart';
 import '../../shared/theme/theme_provider.dart';
 import '../../shared/services/auth_service.dart';
@@ -26,14 +28,45 @@ class ProfileScreen extends ConsumerWidget {
     WidgetRef ref,
     String uid,
   ) async {
+    // Show Source Selector
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
+    // Compress image to ensure it fits in Firestore document (< 1MB)
+    final image = await picker.pickImage(
+      source: source,
+      maxWidth: 600,
+      imageQuality: 50,
+    );
 
     if (image != null) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Uploading image...')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Processing image...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
       }
 
       final url = await ref
@@ -43,7 +76,36 @@ class ProfileScreen extends ConsumerWidget {
         await ref.read(userRepositoryProvider).updateUser(uid, {
           'photoUrl': url,
         });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to process image.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
+    }
+  }
+
+  ImageProvider? _getProfileImage(String? photoUrl) {
+    if (photoUrl == null) return null;
+    if (photoUrl.startsWith('http')) {
+      return CachedNetworkImageProvider(photoUrl);
+    }
+    try {
+      return MemoryImage(base64Decode(photoUrl));
+    } catch (_) {
+      return null;
     }
   }
 
@@ -82,9 +144,7 @@ class ProfileScreen extends ConsumerWidget {
                             _pickAndUploadImage(context, ref, userData.id),
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundImage: userData.photoUrl != null
-                              ? NetworkImage(userData.photoUrl!)
-                              : null,
+                          backgroundImage: _getProfileImage(userData.photoUrl),
                           backgroundColor: Theme.of(
                             context,
                           ).colorScheme.primaryContainer,
@@ -189,12 +249,11 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   _buildListTile(
                     context,
-                    icon: Icons.payment,
-                    title: 'profile.payment_methods'.tr(),
-                    subtitle: 'Cash, UPI', // Placeholder
+                    icon: Icons.bookmark,
+                    title: 'profile.saved_places'.tr(),
+                    subtitle: '${userData.savedPlaces.length} places',
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () =>
-                        context.push('/payment-methods', extra: userData),
+                    onTap: () => context.push('/saved-places', extra: userData),
                   ),
                 ],
 
@@ -224,6 +283,17 @@ class ProfileScreen extends ConsumerWidget {
                   subtitle: context.locale.languageCode.toUpperCase(),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showLanguagePicker(context),
+                ),
+                _buildListTile(
+                  context,
+                  icon: Icons.swap_horiz_rounded,
+                  title: 'Switch Role',
+                  subtitle: role == UserRole.driver
+                      ? 'Switch to Rider'
+                      : 'Switch to Driver',
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () =>
+                      _showSwitchRoleDialog(context, ref, role, userData.id),
                 ),
 
                 const SizedBox(height: 32),
@@ -385,5 +455,56 @@ class ProfileScreen extends ConsumerWidget {
         context.pop();
       },
     );
+  }
+
+  Future<void> _showSwitchRoleDialog(
+    BuildContext context,
+    WidgetRef ref,
+    UserRole currentRole,
+    String uid,
+  ) async {
+    final targetRole = currentRole == UserRole.driver
+        ? UserRole.requester
+        : UserRole.driver;
+    final targetRoleString = targetRole == UserRole.driver ? 'Driver' : 'Rider';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Switch to $targetRoleString?'),
+        content: Text(
+          'You are currently using the app as a ${currentRole == UserRole.driver ? "Driver" : "Rider"}.\n\n'
+          'Switching will change your dashboard and features. Your data will be safe.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Switch to $targetRoleString'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Switching role...')));
+      }
+
+      await ref.read(userRepositoryProvider).updateUser(uid, {
+        'role': targetRole == UserRole.driver ? 'driver' : 'requester',
+      });
+
+      await ref.read(roleProvider.notifier).setRole(targetRole);
+
+      if (context.mounted) {
+        context.go('/home');
+      }
+    }
   }
 }

@@ -64,6 +64,18 @@ class UserRepository {
       return null;
     });
   }
+
+  Stream<List<UserModel>> getUsersByRole(String role) {
+    return _firestore
+        .collection('users')
+        .where('role', isEqualTo: role)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+              .toList();
+        });
+  }
 }
 
 final userStreamProvider = StreamProvider.family<UserModel?, String>((

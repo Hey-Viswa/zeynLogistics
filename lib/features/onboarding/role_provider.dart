@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum UserRole { driver, requester, none }
+enum UserRole { driver, requester, manager, none }
 
 class RoleNotifier extends StateNotifier<UserRole> {
   RoleNotifier() : super(UserRole.none) {
@@ -36,7 +36,7 @@ final roleProvider = StateNotifierProvider<RoleNotifier, UserRole>((ref) {
   return RoleNotifier();
 });
 
-enum VerificationStatus { none, pending, verified }
+enum VerificationStatus { none, pending, verified, rejected }
 
 class VerificationNotifier extends StateNotifier<VerificationStatus> {
   VerificationNotifier() : super(VerificationStatus.none) {
@@ -65,3 +65,26 @@ final verificationProvider =
     StateNotifierProvider<VerificationNotifier, VerificationStatus>((ref) {
       return VerificationNotifier();
     });
+
+class DriverStatusNotifier extends StateNotifier<bool> {
+  DriverStatusNotifier() : super(false) {
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool('driver_is_online') ?? false;
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('driver_is_online', state);
+  }
+}
+
+final driverStatusProvider = StateNotifierProvider<DriverStatusNotifier, bool>((
+  ref,
+) {
+  return DriverStatusNotifier();
+});

@@ -10,6 +10,8 @@
 	<string>This app needs access to camera to upload verification documents.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to photo library to select verification documents.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>This app needs access to motion data to detect when you are driving.</string>
 
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>

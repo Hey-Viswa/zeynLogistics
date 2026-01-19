@@ -141,7 +141,7 @@ class _RoleCard extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () {
-              HapticFeedback.lightImpact();
+              HapticFeedback.mediumImpact();
               onTap();
             },
             child: Padding(

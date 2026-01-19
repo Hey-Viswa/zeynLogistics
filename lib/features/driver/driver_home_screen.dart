@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../shared/data/trip_provider.dart';
 import '../../shared/services/trip_repository.dart';
 import '../../shared/services/auth_service.dart';
 import '../../shared/services/user_repository.dart';
+import '../onboarding/role_provider.dart';
+import '../../shared/widgets/scale_button.dart';
 
 final waitingTripsProvider = StreamProvider<List<Trip>>((ref) {
   return ref.watch(tripRepositoryProvider).streamWaitingTrips();
@@ -20,8 +23,6 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
-  bool _isOnline = false;
-
   @override
   Widget build(BuildContext context) {
     // 1. Get current driver user data
@@ -32,7 +33,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     // 2. Stream waiting trips
     final waitingTripsAsync = ref.watch(waitingTripsProvider);
 
-    return _isOnline
+    // 3. Watch Driver Status
+    final isOnline = ref.watch(driverStatusProvider);
+
+    return isOnline
         ? SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,7 +73,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                               userAsync.value,
                             ),
                           )
-                          .toList(),
+                          .toList()
+                          .animate(interval: 100.ms)
+                          .fade(duration: 400.ms)
+                          .slideY(begin: 0.1, curve: Curves.easeOutQuad),
                     );
                   },
                   loading: () =>
@@ -113,6 +120,18 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         ),
         Row(
           children: [
+            IconButton(
+              onPressed: () {
+                // Open Chat
+                final uid = ref.read(authServiceProvider).currentUser?.uid;
+                if (uid != null) context.push('/chat/$uid');
+              },
+              icon: Icon(
+                Icons.support_agent,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            SizedBox(width: 8.w),
             _buildOnlineToggle(context),
             SizedBox(width: 8.w),
             IconButton(
@@ -131,23 +150,21 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 
   Widget _buildOnlineToggle(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() {
-          _isOnline = !_isOnline;
-        });
+    final isOnline = ref.watch(driverStatusProvider);
+    return ScaleButton(
+      onTap: () async {
+        // Haptic handled by ScaleButton
+        await ref.read(driverStatusProvider.notifier).toggle();
       },
-      borderRadius: BorderRadius.circular(30.r),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: _isOnline
+          color: isOnline
               ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2)
               : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(30.r),
           border: Border.all(
-            color: _isOnline
+            color: isOnline
                 ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.outline,
           ),
@@ -157,17 +174,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             Icon(
               Icons.power_settings_new,
               size: 20.sp,
-              color: _isOnline
+              color: isOnline
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.outline,
             ),
             SizedBox(width: 8.w),
             Text(
-              _isOnline ? 'ONLINE' : 'OFFLINE',
+              isOnline ? 'ONLINE' : 'OFFLINE',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14.sp,
-                color: _isOnline
+                color: isOnline
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.outline,
               ),
@@ -232,18 +249,14 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   padding: EdgeInsets.zero,
                   labelPadding: EdgeInsets.symmetric(horizontal: 8.w),
                 ),
-                Text(
-                  '\$${trip.price.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
               ],
             ),
             SizedBox(height: 16.h),
-            _buildLocationRow(Icons.my_location, trip.pickup),
+            _buildLocationRow(
+              Icons.my_location,
+              trip.pickup,
+              heroTag: 'pickup_${trip.id}',
+            ),
             SizedBox(height: 8.h),
             _buildLocationRow(Icons.location_on, trip.drop),
             SizedBox(height: 16.h),
@@ -260,8 +273,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             SizedBox(height: 24.h),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: () async {
+              child: ScaleButton(
+                onTap: () async {
                   if (driverUser == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -270,9 +283,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     );
                     return;
                   }
-                  HapticFeedback.mediumImpact();
-
-                  // Accept logic
                   await ref
                       .read(tripRepositoryProvider)
                       .assignDriver(trip.id, driverUser);
@@ -281,10 +291,22 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     context.push('/active-trip', extra: trip);
                   }
                 },
-                style: FilledButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                child: Container(
+                  height: 48.h,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(100.r), // Pill shape
+                  ),
+                  child: Text(
+                    'Accept Trip',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                child: Text('Accept Trip', style: TextStyle(fontSize: 16.sp)),
               ),
             ),
           ],
@@ -293,7 +315,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     );
   }
 
-  Widget _buildLocationRow(IconData icon, String text) {
+  Widget _buildLocationRow(IconData icon, String text, {String? heroTag}) {
     return Row(
       children: [
         Icon(
@@ -303,12 +325,25 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         ),
         SizedBox(width: 8.w),
         Expanded(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14.sp),
-          ),
+          child: heroTag != null
+              ? Hero(
+                  tag: heroTag,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Text(
+                      text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                  ),
+                )
+              : Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14.sp),
+                ),
         ),
       ],
     );

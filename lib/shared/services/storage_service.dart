@@ -1,24 +1,30 @@
-import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 final storageServiceProvider = Provider<StorageService>((ref) {
-  return StorageService(FirebaseStorage.instance);
+  return StorageService();
 });
 
 class StorageService {
-  final FirebaseStorage _storage;
-
-  StorageService(this._storage);
+  StorageService();
 
   Future<String?> uploadProfileImage(String uid, XFile imageFile) async {
     try {
+      // Fallback for users without Storage: Convert to Base64
+      final bytes = await imageFile.readAsBytes();
+      final base64String = base64Encode(bytes);
+      return base64String;
+
+      /* 
+      // Original Cloud Storage Code (Disabled)
       final ref = _storage.ref().child('profile_images').child('$uid.jpg');
       await ref.putFile(File(imageFile.path));
       return await ref.getDownloadURL();
+      */
     } catch (e) {
-      // Handle errors appropriately (log them, rethrow, etc.)
+      print('Error converting image: $e');
       return null;
     }
   }
@@ -29,14 +35,12 @@ class StorageService {
     XFile imageFile,
   ) async {
     try {
-      final ref = _storage
-          .ref()
-          .child('driver_documents')
-          .child(uid)
-          .child('$docType.jpg');
-      await ref.putFile(File(imageFile.path));
-      return await ref.getDownloadURL();
+      // Fallback for users without Storage: Convert to Base64
+      final bytes = await imageFile.readAsBytes();
+      final base64String = base64Encode(bytes);
+      return base64String;
     } catch (e) {
+      print('Error converting driver document: $e');
       return null;
     }
   }

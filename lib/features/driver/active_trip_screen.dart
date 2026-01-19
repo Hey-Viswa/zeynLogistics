@@ -169,11 +169,17 @@ class ActiveTripScreen extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: 4.h),
-                  Text(
-                    trip.pickup,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleLarge?.copyWith(fontSize: 18.sp),
+                  Hero(
+                    tag: 'pickup_${trip.id}',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Text(
+                        trip.pickup,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleLarge?.copyWith(fontSize: 18.sp),
+                      ),
+                    ),
                   ),
                 ],
               ),

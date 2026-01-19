@@ -7,12 +7,12 @@ class UserModel {
   final String? email;
   final String? photoUrl; // Added for Google Auth
   final String? role; // 'driver' or 'requester'
+  final String? verificationStatus; // 'pending', 'verified', 'rejected'
   final bool isVerified;
   final DateTime createdAt;
   final List<String> savedPlaces;
   final Map<String, dynamic> paymentMethods;
   final Map<String, String> documents; // New field for driver docs
-
   UserModel({
     required this.id,
     required this.phoneNumber,
@@ -21,6 +21,7 @@ class UserModel {
     this.photoUrl,
     this.role,
     this.isVerified = false,
+    this.verificationStatus,
     required this.createdAt,
     this.savedPlaces = const [],
     this.paymentMethods = const {},
@@ -36,6 +37,7 @@ class UserModel {
       'photoUrl': photoUrl,
       'role': role,
       'isVerified': isVerified,
+      'verificationStatus': verificationStatus,
       'createdAt': Timestamp.fromDate(createdAt),
       'savedPlaces': savedPlaces,
       'paymentMethods': paymentMethods,
@@ -52,6 +54,7 @@ class UserModel {
       photoUrl: map['photoUrl'],
       role: map['role'],
       isVerified: map['isVerified'] ?? false,
+      verificationStatus: map['verificationStatus'],
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       savedPlaces: List<String>.from(map['savedPlaces'] ?? []),
       paymentMethods: Map<String, dynamic>.from(map['paymentMethods'] ?? {}),
@@ -65,6 +68,7 @@ class UserModel {
     String? photoUrl,
     String? role,
     bool? isVerified,
+    String? verificationStatus,
     List<String>? savedPlaces,
     Map<String, dynamic>? paymentMethods,
     Map<String, String>? documents,
@@ -77,6 +81,7 @@ class UserModel {
       photoUrl: photoUrl ?? this.photoUrl,
       role: role ?? this.role,
       isVerified: isVerified ?? this.isVerified,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
       createdAt: createdAt,
       savedPlaces: savedPlaces ?? this.savedPlaces,
       paymentMethods: paymentMethods ?? this.paymentMethods,

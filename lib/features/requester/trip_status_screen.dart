@@ -65,6 +65,26 @@ class TripStatusScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Center(
+                        child: Hero(
+                          tag: 'trip_title_${trip.id}',
+                          child: Material(
+                            color: Colors.transparent,
+                            child: Text(
+                              'Trip #${trip.id.substring(0, 4)}',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    fontSize: 18.sp,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
                       _buildStatusHeader(context, trip),
                       SizedBox(height: 24.h),
                       if (trip.driverId != null) ...[
